@@ -1,1 +1,1 @@
-# Data_plotter
+# A data plot GUI using pyplot. It's under development.
