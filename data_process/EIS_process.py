@@ -43,7 +43,7 @@ class EIS_plot:
             freq = new_freq
             self._freq_list[count].append(freq)
             self._re_list[count].append(float(line[1]))
-            self._im_list[count].append( - float(line[2]))
+            self._im_list[count].append( float(line[2]))
 
             
     def read(self):
