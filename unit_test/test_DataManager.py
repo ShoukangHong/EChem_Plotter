@@ -39,6 +39,7 @@ class DataManagerTester:
         print('\nall test of LoadDocInfo passed!\n')
     
     def testDataProcess(self):
+        '''test base case data and store them in self._dataManager for later tests'''
         rawAddresses = [r'C:\Users\shouk\Github\EChem_Plotter\test_data\BaseTest\linear.txt',
                         r'C:\Users\shouk\Github\EChem_Plotter\test_data\BaseTest\power.xlsx',
                         r'C:\Users\shouk\Github\EChem_Plotter\test_data\BaseTest\sin.mpt']
@@ -56,15 +57,14 @@ class DataManagerTester:
             ender = dataManager.createEnder(end[i])
             dataManager.formatRawData(spliter, starter, ender, 3)
             self._dataManagers.append(dataManager)
-            assert len(dataManager.getData()) == lenghts[i], 'expected length: '+ lenghts[i] + ', yours: ' + str(len(dataManager.getData()))
+            assert len(dataManager.getData()) == lenghts[i], 'expected length: '+ str(lenghts[i]) + ', yours: ' + str(len(dataManager.getData()))
             colx = dataManager.getCol('x')
             coly = dataManager.getCol(1)
             for j in range(lenghts[i]):
                 assert abs(colx[j] - funcX[i](j)) < 0.001, 'expected x: ' + str(funcX[i](j)) + ', yours: ' + str(colx[j])
                 assert abs(coly[j] - funcY[i](colx[j]))<0.001, 'expected y: ' + str(funcY[i](colx[j])) + ', yours: ' + str(coly[j])
         print('\nformat data test passed!\n')
-        self.testPlotDataSet()
-        
+    
     def testPlotDataSet(self):
         '''excecute using'''
         stringsX = ['','-val','val * val']
@@ -92,39 +92,44 @@ class DataManagerTester:
     def testPlotter(self):
         plotter = self._plotter
         pyplot = plotter.pyplot()
-        plotter.setSubPlots(2,1)
+        plotter.newFigure(2,1)
         seq = [0, 0, 1]
         for i, dataManager in enumerate(self._dataManagers):
+            plotter.setActiveAx(seq[i])
             label = dataManager.docInfo('name')
             dataManager.createPlotData(0, label = 'x')
             dataManager.createPlotData(1, label = 'y')
             plotter.addDataManager(dataManager)
             if i < 2:
-                xData = plotter.activeDataManager().getPlotDataValues('x')
-                yData = plotter.activeDataManager().getPlotDataValues('y')
-                plotter.plot(xData, yData, axIndex = seq[i], legend = label)
+                plotter.plot('x', 'y', label = label)
             else:
                 plotter.activeDataManager().setPlotRangeByValue('x', 1, 3)
                 xData = plotter.activeDataManager().getPlotDataValues('x')
                 yData = plotter.activeDataManager().getPlotDataValues('y')
                 assert xData[0] == 1 and xData[-1] == 3, 'xData[0] = ' + str(xData[0]) + ', expected: 1.0, ' + 'xData[-1] = ' + str(xData[-1]) + ',  expected: 3.0'
-                plotter.plot(xData, yData, axIndex = seq[i], legend = label + ' x range 1-3')
+                plotter.plot('x', 'y', label = label + ' x range 1-3')
                 turnHandler = ' y(i-1) > y(i) and y(i) < y(i+1)'
                 plotter.activeDataManager().setPlotRangeByTurn('y', turnHandler, 3, 4)
                 xData = plotter.activeDataManager().getPlotDataValues('x')
                 yData = plotter.activeDataManager().getPlotDataValues('y')
                 assert xData[0] == 3.5 and xData[-1] == 5.5, 'xData[0] = ' + str(xData[0]) + ', expected: 3.5, ' + 'xData[-1] = ' + str(xData[-1]) + 'expected: 5.5'
-                plotter.plot(xData, yData, axIndex = seq[i], legend = label + ' turn 3')
+                plotter.plot('x', 'y', label = label + ' turn 3')
 
-            plotter.setXAxLabel('x Axis', axIndex = seq[i])
-            plotter.setYAxLabel('y Axis', axIndex = seq[i])
-            plotter.setAxScale(xStart = 0, axIndex = seq[i])
-            plotter.showLegend(axIndex = seq[i])
+            plotter.setXAxLabel('x Axis')
+            plotter.setYAxLabel('y Axis')
+            plotter.setAxScale(left = 0)
+            plotter.showLegends()
 
-        address = dataManager.formatAddress(self._saveAddress + r'\Basic.png') 
-        plotter.pyplot().savefig(address, dpi=300, bbox_inches="tight")
+        address = plotter.activeDataManager().formatAddress(self._saveAddress + r'\Basic.png') 
+        #plotter.pyplot().savefig(address, dpi=300, bbox_inches="tight")
         print('Finish! check the plot! Linear and power are in upper plot, sin is in bottom plot with two parts!')
-        
+    
+    def testSave(self):
+        '''test save documents'''
+        for i, dataManager in enumerate(self._dataManagers):
+            dataManager.saveData(step = i + 1)
+            dataManager.savePlotData(step = i + 1)
+            
     def testRealData(self):
         self.testCACP()
         self.testCV()
@@ -134,8 +139,7 @@ class DataManagerTester:
         start_time = time.time()
         plotter = self._plotter
         pyplot = plotter.pyplot()
-        plotter.newFig()
-        plotter.setSubPlots(2,1)
+        plotter.newFigure(2,1)
         rawAddresses = [r'C:\Users\shouk\Github\EChem_Plotter\test_data\CA\200nm-AAO-TiN-V2O5_Lithiate-2_02_CA_C04.txt',
                         r'C:\Users\shouk\Github\EChem_Plotter\test_data\CA\AAO-TiN-V2O5_Lithiate_02_CA_C08.txt',
                         r'C:\Users\shouk\Github\EChem_Plotter\test_data\CP\200nm-AAO-TiN-V2O5_Lithiate-2_01_CP_C04.txt',
@@ -144,27 +148,29 @@ class DataManagerTester:
         for i, rawAddress in enumerate(rawAddresses):
             dataManager = Plotter_Core.DataManager(rawAddress)
             plotter.addDataManager(dataManager)
+            plotter.setActiveAx(i//2)
             dataManager.formatRawData()
-            dataManager.createPlotData('time/s')
+            if i >= 2:
+                dataManager.createPlotData('time/s', label = 'time')
+            else:
+                dataManager.createPlotData('time/s', label = 'time', funcString = 'val - time(0, val)')
             dataManager.createPlotData(labelY[i//2])
-            xData = dataManager.getPlotDataValues('time/s')
-            yData = dataManager.getPlotDataValues(labelY[i//2])
-            plotter.plot(xData, yData, axIndex = i // 2, legend = dataManager.docInfo('name'))
-            plotter.setXAxLabel('time/s', axIndex = i // 2)
-            plotter.setYAxLabel(labelY[i//2], axIndex = i // 2)
+            plotter.plot('time', labelY[i//2], label = dataManager.docInfo('name'))
+            plotter.setXAxLabel('time/s')
+            plotter.setYAxLabel(labelY[i//2])
             if i % 2 == 1:
-                plotter.setAxScale(xStart = 0, axIndex = i // 2)
-                plotter.showLegend(axIndex = i // 2)
+                plotter.setAxScale(left = -1000)
+                plotter.showLegends()
+                plotter.setTickInterval('y', tickNum = 7, minor = True, realign = 'se')
         address = dataManager.formatAddress(self._saveAddress + r'\CACP.png') 
-        plotter.pyplot().savefig(address, dpi=300, bbox_inches="tight")
+        #plotter.pyplot().savefig(address, dpi=600, bbox_inches="tight")
         print("testCACP takes %s seconds" % (time.time() - start_time))
         
     def testCV(self):
         start_time = time.time()
         plotter = self._plotter
         pyplot = plotter.pyplot()
-        plotter.newFig()
-        plotter.setSubPlots(1,1)
+        plotter.newFigure(1,1)
         rawAddresses = [r'C:\Users\shouk\Github\EChem_Plotter\test_data\CV\11142021-Li-EC-DMC-LiPF6-V2O5_CV_0_1mV_C02.mpt',
                         r'C:\Users\shouk\Github\EChem_Plotter\test_data\CV\11142021-Li-PC-LiClO4-V2O5_CV-0_1mV_C04.mpt']
         name = ['Li-EC-DMC-LiPF6-V2O5', 'Li-PC-LiClO4-V2O5']
@@ -173,50 +179,45 @@ class DataManagerTester:
             starter = dataManager.createStarter('mode')
             plotter.addDataManager(dataManager)
             dataManager.formatRawData(starter = starter)
-            dataManager.createPlotData('cycle number')
             dataManager.createPlotData('control/V')
             dataManager.createPlotData('<I>/mA')
+            dataManager.createPlotData('cycle number')
             for j in range(2, 4):
                 plotter.activeDataManager().setPlotRangeByValue('cycle number' , j, j)
-                xData = dataManager.getPlotDataValues('control/V')
-                yData = dataManager.getPlotDataValues('<I>/mA')
-                plotter.plot(xData, yData, legend = name[i] + ' cy-' + str(j))
+                plotter.plot('control/V', '<I>/mA', label = name[i] + ' cy-' + str(j))
+            #dataManager.savePlotData(labels = ['control/V', 'cycle number', '<I>/mA'])
             plotter.setXAxLabel('control/V')
             plotter.setYAxLabel('I/mA')
-            plotter.showLegend()
+            plotter.showLegends()
         address = dataManager.formatAddress(self._saveAddress + r'\CV.png') 
-        plotter.pyplot().savefig(address, dpi=300, bbox_inches="tight")
+        #plotter.pyplot().savefig(address, dpi=600, bbox_inches="tight")
         print("testCVtakes %s seconds" % (time.time() - start_time))
         
     def testCycle(self):
         start_time = time.time()
         plotter = self._plotter
         pyplot = plotter.pyplot()
-        plotter.newFig()
-        plotter.setSubPlots(2,1)
+        plotter.newFigure(2,1)
         rawAddress = r'C:\Users\shouk\Github\EChem_Plotter\test_data\Cycle\ACC_S_253_3_94mg_TFEE-DOL_3-1_1MLiTFSI_50cy_DME-DOL_0_35MLiTFSI_1wtLiNO3_0_5C_SHong_09242020.xls'
         name = 'ACC_S_pretreat-50'
 
-        dataManager = Plotter_Core.DataManager(rawAddress, 1)
+        dataManager = Plotter_Core.DataManager(rawAddress, [1,2])
         plotter.addDataManager(dataManager)
         dataManager.formatRawData()
         dataManager.createPlotData('Step_Index', label = 'Step_Index')
-        dataManager.createPlotData('Voltage', label = 'Voltage')
-        dataManager.createPlotData('Test_Time', label = 'Test_Time')
         plotter.activeDataManager().setPlotRangeByValue('Step_Index', 2)
-        xData = dataManager.getPlotDataValues('Test_Time')
-        yData = dataManager.getPlotDataValues('Voltage')
-        dataManager.createVariable('startTime', xData[0])
-        handler = '(val - Test_Time(startIndex))/3600'
-        xData = dataManager.modifyValues(xData, handler)
-        plotter.plot(xData, yData, legend = name)
-        plotter.setAxScale(xStart = 0, xEnd = 100)
+        dataManager.createPlotData('Voltage', label = 'Voltage')
+        dataManager.createPlotData('Test_Time', label = 'Test_Time', funcString = '(val - Test_Time(startIndex))/3600')
+        plotter.plot('Test_Time', 'Voltage', label = name)
+        plotter.setAxScale(left = 0, bottomBlank=0.1, topBlank=0.1)
+        plotter.setTickInterval('x', tickNum=10, minor = True)
+        plotter.setTickInterval('y', tickNum=5, realign = 'se')
         plotter.setXAxLabel('Time/h')
         plotter.setYAxLabel('Voltage/V')
         plotter.activeAx().set_title('Long term cycle')
-        plotter.showLegend()
+        plotter.showLegends()
         
-        dataManager = Plotter_Core.DataManager(rawAddress, 'Statistics_1-017')
+        dataManager = Plotter_Core.DataManager(rawAddress, ['Statistics_1-017'])
         plotter.addDataManager(dataManager)
         dataManager.formatRawData()
         handlerCharge = '1000 * (val - Charge_Capacity(i - 1, 0))'
@@ -227,23 +228,23 @@ class DataManagerTester:
         dataManager.createPlotData('Discharge_Capacity', handlerDischarge, label = 'Discharge_Capacity')
         dataManager.createPlotData('Discharge_Capacity', handlerEfficiency, label = 'Efficiency')
         dataManager.setPlotRangeByValue('Cycle_Index' , 2)
-        xData = dataManager.getPlotDataValues('Cycle_Index')
-        yData = dataManager.getPlotDataValues('Discharge_Capacity')
-        y2Data = dataManager.getPlotDataValues('Efficiency')
         plotter.setActiveAx(1)
-        plotter.plot(xData, yData, legend = name)
-        plotter.setAxScale(xStart = 0, yStart = 0, yEnd = 5)
+        plotter.plot('Cycle_Index', 'Discharge_Capacity', label = name)
+        plotter.setAxScale(left = 0, bottom = 0, topBlank=0.3)
+        plotter.setTickInterval('y', tickNum=10, realign = 'se')
         plotter.setXAxLabel('Cycle')
         plotter.setYAxLabel('Capacity/mAh')
-        plotter.addTwinX(1)
+        plotter.addTwinX()
         plotter.setYAxLabel(r'Efficiency/%')
-        plotter.plot(xData, y2Data, legend = 'Efficiency', style = 'ro')
-        plotter.setAxScale(yStart = 50, yEnd = 110)
+        plotter.plot('Cycle_Index', 'Efficiency', label = 'Efficiency', style = 'ro')
+        plotter.setAxScale(bottom = 50, topBlank=0.1)
+        plotter.setTickInterval('x', tickNum=7, minor = 2)
+        plotter.setTickInterval('y', interval = 10, minor = 2)
         plotter.activeAx().set_title('Capacity degradation')
-        plotter.showLegend()
+        plotter.showLegends()
         
         address = dataManager.formatAddress(self._saveAddress + r'\cycle.png')
-        pyplot.savefig(address, dpi=300, bbox_inches="tight")
+        #pyplot.savefig(address, dpi=600, bbox_inches="tight")
         print("testCycletakes %s seconds" % (time.time() - start_time))
         
 # =============================================================================
@@ -254,13 +255,17 @@ class DataManagerTester:
 # =============================================================================
 if (__name__ == '__main__'):
 
-    # tester = DataManagerTester()
-    # tester.testCycle()
+    tester = DataManagerTester()
+    tester.testDataProcess()
+    tester.testPlotDataSet()
+    #tester.testSave()
+    tester.testPlotter()
+    tester.testRealData()
 
     #DataManagerTester().testLoadDocInfo()
     
-    tester = DataManagerTester()
-    tester.testDataProcess()
-    tester.testPlotter()
-    tester.testRealData()
+    # tester = DataManagerTester()
+    # tester.testDataProcess()
+    # tester.testPlotter()
+    # tester.testRealData()
 
