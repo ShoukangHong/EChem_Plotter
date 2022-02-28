@@ -9,8 +9,7 @@ import math
 import re
 import time
 import numpy
-sys.path.append("..")
-from data_process import Plotter_Core
+import Plotter_Core
 
 class DataManagerTester:
     def __init__(self):
@@ -203,7 +202,7 @@ class DataManagerTester:
         rawAddress = r'C:\Users\shouk\Github\EChem_Plotter\test_data\Cycle\ACC_S_253_3_94mg_TFEE-DOL_3-1_1MLiTFSI_50cy_DME-DOL_0_35MLiTFSI_1wtLiNO3_0_5C_SHong_09242020.xls'
         name = 'ACC_S_pretreat-50'
 
-        dataManager = Plotter_Core.DataManager(rawAddress, [1,2])
+        dataManager = Plotter_Core.DataManager(rawAddress, 1)
         plotter.addDataManager(dataManager)
         dataManager.formatRawData()
         dataManager.createPlotData('Step_Index', label = 'Step_Index')
@@ -220,7 +219,7 @@ class DataManagerTester:
         plotter.activeAx().set_title('Long term cycle')
         plotter.showLegends()
         
-        dataManager = Plotter_Core.DataManager(rawAddress, ['Statistics_1-017'])
+        dataManager = Plotter_Core.DataManager(rawAddress, 'Statistics_1-017')
         plotter.addDataManager(dataManager)
         dataManager.formatRawData()
         handlerCharge = '1000 * (val - Charge_Capacity(i - 1, 0))'

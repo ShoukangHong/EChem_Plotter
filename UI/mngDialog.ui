@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>444</width>
+    <width>414</width>
     <height>319</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>400</width>
+    <width>0</width>
     <height>0</height>
    </size>
   </property>
@@ -60,7 +60,7 @@
     <widget class="QGroupBox" name="rParamBox">
      <property name="minimumSize">
       <size>
-       <width>250</width>
+       <width>200</width>
        <height>75</height>
       </size>
      </property>
@@ -146,17 +146,12 @@
         </item>
         <item>
          <property name="text">
-          <string>Truncate Data</string>
+          <string>Add Variable</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>Set Variable</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Add Plot Data</string>
+          <string>Create Plot Data</string>
          </property>
         </item>
         <item>
@@ -166,12 +161,12 @@
         </item>
         <item>
          <property name="text">
-          <string>Set Plot Data Range By Value</string>
+          <string>Truncate Plot Data By Value</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>Set Plot Data Range By Turn</string>
+          <string>Truncate Plot Data By Turn</string>
          </property>
         </item>
        </widget>
@@ -183,7 +178,7 @@
     <widget class="QGroupBox" name="oParamBox">
      <property name="minimumSize">
       <size>
-       <width>250</width>
+       <width>200</width>
        <height>120</height>
       </size>
      </property>

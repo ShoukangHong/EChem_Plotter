@@ -9,7 +9,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationTool
 from matplotlib.figure import Figure
 from PyQt5.QtWidgets import *
 # from qgis.gui import QgsMapCanvas
-from data_process import Plotter_Core
+import Plotter_Core
 from PyQt5 import uic, QtCore
 from PlotterWidgets import MngTabWidget
 
@@ -23,7 +23,7 @@ ROOT = INFOTABS = MNGTABS = PLTTABS = CANVAS = None
 class Ui_MainWindow(BaseUI):
     def setupUi(self, mainWindow):
         super().setupUi(mainWindow)
-        mainWindow._ui = self
+        mainWindow.ui = self
         self.connectEvents(mainWindow)
         self.setGlobals()
         
@@ -48,7 +48,12 @@ class Ui_MainWindow(BaseUI):
         CANVAS = self.canvas
     
     def addInitialWidgets(self, mainWindow):
-        self.mngTabs.addTab(MngTabWidget(self.mngTabs), "new Tab")
+        newTab = MngTabWidget(self.mngTabs)
+        self.mngTabs.addTab(newTab, "new Tab")
+        newTab.setInfoWindows(self.rawDataInfoList,
+                              self.dataInfoTable,
+                              self.varInfoTable,
+                              self.plotDataInfoTable)
     
     def connectEvents(self, mainWindow):
         pass

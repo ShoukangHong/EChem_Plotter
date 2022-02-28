@@ -42,7 +42,7 @@ class PlotData:
         return '\n'.join( [self._label] + [self._unit] + [str(val) for val in self._values])
     
 class DataManager:
-    def __init__(self, rawAddress, sheets = None):
+    def __init__(self, rawAddress, sheet = 0):
         self._docInfo = {}
         self._rawData = []
         self._header= []
@@ -50,23 +50,25 @@ class DataManager:
         self._variables = {}
         self._plotDataSet = {}
         self._eventLog = []
-        self.loadRawData(rawAddress, sheets)
+        self.loadRawData(rawAddress, sheet)
     
     # =======================================
     # Load and format file
     # =======================================
-    def loadRawData(self, rawAddress,sheets = None):
+    def loadRawData(self, rawAddress,sheet = 0):
         '''given a doc address, return the data as a string'''
         address = self.loadDocInfo(rawAddress)
+        docType = self.docInfo('type') 
         try:
-            doc = open(address, 'r')
-            self._rawData.append(doc.readlines())
+            if docType == '.mpt':
+                doc = open(address, 'r', encoding='utf-8',errors = 'ignore')
+            else:
+                doc = open(address, 'r')
+            self._rawData = doc.readlines()
         except:
             try:
-                sheets = sheets if sheets else (0,)
-                for sheet in sheets:
-                    dataFrame = pandas.read_excel(address, sheet)
-                    self._rawData.append(dataFrame.to_csv(index=False, sep='\t').split('\r\n'))
+                dataFrame = pandas.read_excel(address, sheet)
+                self._rawData=dataFrame.to_csv(index=False, sep='\t').split('\r\n')
             except:
                 self.__pushLog('document doesn\'t exist!')
                 self.viewLog()
@@ -98,19 +100,18 @@ class DataManager:
         spliter = self.createSpliter() if not spliter else spliter
         starter = self.createStarter() if not starter else starter
         ender = self.createEnder() if not ender else ender
-        for rawData in self._rawData:
-            i = 0
-            while not starter(rawData[i]):
-                i += 1
-                
-            self._header = spliter(rawData[i].strip())
+        i = 0
+        while not starter(self._rawData[i]):
             i += 1
             
-            while i < len(rawData) and not ender(rawData[i]):
-                if rawData[i] != '':
-                    line = [string for string in spliter(rawData[i].strip())]
-                    self._data.append(line)
-                i += 1
+        self._header = spliter(self._rawData[i].strip())
+        i += 1
+        
+        while i < len(self._rawData) and not ender(self._rawData[i]):
+            if self._rawData[i] != '':
+                line = [string for string in spliter(self._rawData[i].strip())]
+                self._data.append(line)
+            i += 1
         # del self._rawData
     
     # def truncateData(self, step = 1, start = 0, end = None):
@@ -305,10 +306,30 @@ class DataManager:
     def viewLog(self):
         for string in self._eventLog[::-1]:
             print(string)
-            
-    def __str__(self):
-        print('\t'.join(self._header))
-        print('\n'.join(['\t'.join([str(num) for num in line]) for line in self._data]))
+    
+    def createInfoData(self):
+        '''return a dict'''
+        info = {'raw': self.getShortList(self._rawData),
+                'data': self._header[:] + self.getShortList(self._data),
+                'variables' : self._variables.copy(),
+                'plotData' : {key:self.getShortList(data) for key, data in self._plotDataSet.items()}
+                }
+        return info
+    
+    def getShortList(self, dataList):
+        if not dataList:
+            return []
+        if len(dataList) < 30:
+            return dataList[:]
+        else:
+            if isinstance(dataList[0], list):
+                placeHolder = [['...' for i in range(len(dataList[0]))]]
+            else:
+                placeHolder = ['...']
+            return dataList[:10]+placeHolder+dataList[len(dataList)//2-2:len(dataList)//2+2]+placeHolder+dataList[-10:]
+    # def __str__(self):
+    #     print('\t'.join(self._header))
+    #     print('\n'.join(['\t'.join([str(num) for num in line]) for line in self._data]))
         
     # =======================================
     # Getters
