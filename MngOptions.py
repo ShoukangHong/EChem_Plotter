@@ -64,60 +64,60 @@ Example:
 # action parameters
 # ==========================
 empty = {'rParam':{}, 'oParam':{}}
-formatRawData = {
+formatRawData = { 'func': 'formatRawData',
     'rParam':{
         'spliter': {'term': 'Split Text', 'type': str, 'option': {'Tab': '\t', 'Comma':',', 'Text': True}, 'desc':'use this parameter to split each row of data'}}, 
     'oParam':{
         'starter': {'term': 'Start Text', 'type': str, 'Text': True, 'desc':'if a line contains this parameter, start data collection(inclusive)'},
         'ender': {'term': 'End Text', 'type': str, 'Text': True, 'desc':'if a line contains this parameter, end data collection(exclusive)'}}}
 
-addVariable = {
+addVariable = { 'func': 'createVariable',
     'rParam':{
         'name':{'term':'Variable Name', 'type': str, 'Text': nameValidator, 'desc':'set the name of your variable, it cannot contain space and cannot be a number'},
         'value':{'term':'Variable Value', 'type': float, 'Text': QDoubleValidator(), 'desc':'set the value of your variable, it must be a number'}},
     'oParam':{}}
 
-creatPlotData = {
+createPlotData = { 'func': 'createPlotData',
     'rParam':{
         'key':{'term':'Title', 'type': str, 'Text': True, 'desc':'Get data from the corresponding title'},
         'label':{'term':'Name', 'type': str, 'Text': nameValidator, 'desc':'Set the name of this plot data.'}},
     'oParam':{
         'funcString':{'term':'function', 'type': str, 'Text': True, 'desc':formulaHelp},
-        'sigFig':{'term':'SigFig', 'type': int, 'Text': QIntValidator(1, 100), 'desc':'set sig fig of the plot data'}}}
+        'sigfig':{'term':'Sigfig', 'type': int, 'Text': QIntValidator(1, 100), 'desc':'set sig fig of the plot data'}}}
 
-modifyPlotData = {
+modifyPlotData = { 'func': 'modifyPlotData',
     'rParam':{
         'label':{'term':'Name', 'type': str, 'Text': nameValidator, 'desc':'the name of plot data to modify.'},
         'funcString':{'term':'function', 'type': str, 'Text': True, 'desc':formulaHelp}},
     'oParam':{}}
 
-truncateByValue = {
+truncateByValue = { 'func': 'truncatePlotDataByValue',
     'rParam':{
         'label':{'term':'Plot Data Name', 'type': str, 'Text': nameValidator, 'desc': 'the name of plot data used to determine data range by value'},
-        'inputLabel':{'term':'Input', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of input plot data that are about to truncate'}}, 
+        'inputLabels':{'term':'Input', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of input plot data that are about to truncate'}}, 
     'oParam':{
-        'outputLabel':{'term':'Output', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data.'},
+        'outputLabels':{'term':'Output', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data.'},
         'startValue': {'term':'Start Value', 'type':float, 'Text':QDoubleValidator(),'desc': 'truncate data before the start value.'},
         'endValue': {'term':'End Value', 'type':float, 'Text':QDoubleValidator(),'desc': 'truncate data after the end value.'}}}
 
-truncateByTurn = {
+truncateByTurn = { 'func': 'truncatePlotDataByTurn',
     'rParam':{
         'label':{'term':'Plot Data Name', 'type': str, 'Text': nameValidator, 'desc': 'the name of plot data used to determine data range by Turn'},
         'turnHandlerString':{'term':'function', 'type':str, 'Text': True, 'desc': turnFormulaHelp},
-        'inputLabel':{'term':'Input', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of input plot data that are about to truncate'}}, 
+        'inputLabels':{'term':'Input', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of input plot data that are about to truncate'}}, 
     'oParam':{
-        'outputLabel':{'term':'Output', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data.'},
+        'outputLabels':{'term':'Output', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data.'},
         'startTurn': {'term':'Start Turn', 'type':int, 'Text':QIntValidator(),'desc': 'truncate data before the start turn, if disabled start at turn one.'},
         'endTurn': {'term':'End Turn', 'type':int, 'Text':QIntValidator(),'desc': 'truncate data after the end value, if disabled end after turn one.'}}}
 
 # ==========================
 # action Dictionary
 # ==========================
-ACTIONDICT = {
+MNGACTIONDICT = {
     'Choose Action': empty ,
     'Format Raw Data':formatRawData,
     'Add Variable':addVariable,
-    'Create Plot Data':creatPlotData,
+    'Create Plot Data':createPlotData,
     'Modify Plot Data':modifyPlotData,
     'Truncate Plot Data By Value':truncateByValue,
     'Truncate Plot Data By Turn':truncateByTurn

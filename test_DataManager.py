@@ -51,10 +51,7 @@ class DataManagerTester:
         for i, rawAddress in enumerate(rawAddresses):
             print('testing file: ' + rawAddress)
             dataManager = Plotter_Core.DataManager(rawAddress)
-            spliter = dataManager.createSpliter(split[i])
-            starter = dataManager.createStarter(start[i])
-            ender = dataManager.createEnder(end[i])
-            dataManager.formatRawData(spliter, starter, ender)
+            dataManager.formatRawData(split[i], start[i], end[i])
             self._dataManagers.append(dataManager)
             assert len(dataManager.getData()) == lenghts[i], 'expected length: '+ str(lenghts[i]) + ', yours: ' + str(len(dataManager.getData()))
             colx = dataManager.getCol('x', 3)
@@ -177,9 +174,9 @@ class DataManagerTester:
         name = ['Li-EC-DMC-LiPF6-V2O5', 'Li-PC-LiClO4-V2O5']
         for i, rawAddress in enumerate(rawAddresses):
             dataManager = Plotter_Core.DataManager(rawAddress)
-            starter = dataManager.createStarter('mode')
             plotter.addDataManager(dataManager)
-            dataManager.formatRawData(starter = starter)
+            dataManager.formatRawData(starter='mode')
+            print(dataManager._header)
             dataManager.createPlotData('control/V')
             dataManager.createPlotData('<I>/mA')
             dataManager.createPlotData('cycle number')

@@ -93,13 +93,14 @@ class DataManager:
                 address += char
         return address[1:-1]
     
-    def formatRawData(self, spliter = None, starter = None, ender = None):
+    def formatRawData(self, spliter = '\t', starter = None, ender = None):
         '''given raw data, format it to meet certain criteria.
         spliter, starter, ender, (str): determines the way to deal with raw data
         '''
-        spliter = self.createSpliter() if not spliter else spliter
-        starter = self.createStarter() if not starter else starter
-        ender = self.createEnder() if not ender else ender
+        spliter = self.createSpliter(spliter)
+        starter = self.createStarter(starter)
+        ender = self.createEnder(ender)
+        self._data = []
         i = 0
         while not starter(self._rawData[i]):
             i += 1
@@ -310,10 +311,11 @@ class DataManager:
     def createInfoData(self):
         '''return a dict'''
         info = {'raw': self.getShortList(self._rawData),
-                'data': self._header[:] + self.getShortList(self._data),
+                'data': [self._header[:]] + self.getShortList(self._data),
                 'variables' : self._variables.copy(),
-                'plotData' : {key:self.getShortList(data) for key, data in self._plotDataSet.items()}
+                'plotData' : {key:self.getShortList(data.values()) for key, data in self._plotDataSet.items()}
                 }
+        print(info)
         return info
     
     def getShortList(self, dataList):
@@ -359,8 +361,12 @@ class DataManager:
         if isinstance(key, int):
             return key
         for i, label in enumerate(self._header):
+            if key==label:
+                return i
+        for i, label in enumerate(self._header):
             if re.match(key, label):
                 return i
+        raise NameError('key not found! Key: ' + key + ', Header: ' + str(self._header))
 
     def getData(self):
         return self._data
@@ -404,10 +410,11 @@ class EchemPlotter:
         self._axes = []
         self._twinXs = []
         self._twinYs = []
-        plt.figure(self._figureCount)
         if clear:
             self.figure().clear()
-            plt.close(self.figure())
+            plt.clf()
+            #plt.close(self.figure())
+        plt.figure(self._figureCount)
     
     # =======================================
     # Plotting Methods
@@ -470,6 +477,10 @@ class EchemPlotter:
         ax = self.indexToAx(axIndex)
         self._twinYs[axIndex] = ax.twiny()
         self.setActiveAx(axIndex, 'y')
+    
+    def setTitle(self, title = '', **kwargs):
+        '''label(str): Set the title of active ax.'''
+        self.activeAx().set_title(title, **kwargs)
     
     def showLegends(self, **kwargs):
         '''Show legends of all axis in the subplot of activeAx.
@@ -607,7 +618,10 @@ class EchemPlotter:
     def addDataManager(self, dataManager):
         self._dataManagers.append(dataManager)
         self.setActiveDataManager(-1)
-    
+
+    def setDataManager(self, dataManagers):
+        self._dataManagers = dataManagers
+
     def figure(self):
         return self._figure
     

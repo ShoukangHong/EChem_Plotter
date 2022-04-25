@@ -6,15 +6,16 @@
 #
 # WARNING! All changes made in this file will be lost!
 from PyQt5.QtWidgets import (QListWidget, QMenu, QAction, QMessageBox, QDialog,
-                             QFrame, QLabel, QHBoxLayout, QRadioButton, QListWidgetItem,
+                             QFrame, QLabel, QHBoxLayout, QRadioButton, QListWidgetItem, QTableWidgetItem,
                              QCheckBox, QLineEdit, QFileDialog)
 from PyQt5 import uic, QtCore
-from MngOptions import ACTIONDICT
+from MngOptions import MNGACTIONDICT
+from PlotOptions import PLOTACTIONDICT
 from PyQt5.QtGui import QIcon
-from Plotter_Core import DataManager
+from Plotter_Core import DataManager, EchemPlotter
 import json
 MainUI, MainWindow = uic.loadUiType("UI/mainWindow.ui")
-MngDlgUI, MngDlgWindow = uic.loadUiType("UI/mngDialog.ui")
+ActionDlgUI, ActionDlgWindow = uic.loadUiType("UI/actionDialog.ui")
 
 class MngDialogFrame(QFrame):
     def __init__(self, parent, key , param):
@@ -118,11 +119,12 @@ class MngDialogFrame(QFrame):
     def setInput(self, key, val):
         self._inputInfo[key] = val
     
-        
-class MngDialogWidget(MngDlgWindow):
+#Supper class of Dialog Widget
+class BaseDialogWidget(ActionDlgWindow):
     def __init__(self, parent):
         super().__init__(parent)
-        self.ui = MngDlgUI()
+        self.actionDict = {}
+        self.ui = ActionDlgUI()
         self.ui.setupUi(self)
         self.connectEvents()
         self.rParamWidgets = {}
@@ -151,10 +153,10 @@ class MngDialogWidget(MngDlgWindow):
         text = self.ui.actionCB.itemText(idx)
         self.clearParams()
         
-        for key, param in ACTIONDICT[text]['rParam'].items():
+        for key, param in self.actionDict[text]['rParam'].items():
             self.addRequiredParam(key, param)
             
-        for key, param in ACTIONDICT[text]['oParam'].items():
+        for key, param in self.actionDict[text]['oParam'].items():
             self.addOptionalParam(key, param)
             
     # ==========================
@@ -166,7 +168,7 @@ class MngDialogWidget(MngDlgWindow):
             self.clearResultAndShowError("You haven't choose an action!")
             return False
         actionText = self.ui.actionCB.currentText()
-        rParams = ACTIONDICT[actionText]['rParam'].keys()
+        rParams = self.actionDict[actionText]['rParam'].keys()
         rParamDict = {}
         rWidgetSetups = {}
         for key in rParams:
@@ -180,7 +182,7 @@ class MngDialogWidget(MngDlgWindow):
             
         oParamDict = {}
         oWidgetSetups = {}
-        oParams = ACTIONDICT[actionText]['oParam'].keys()
+        oParams = self.actionDict[actionText]['oParam'].keys()
         for key in oParams:
             widget = self.oParamWidgets[key]
             if not widget.isInputValid():
@@ -236,7 +238,7 @@ class MngDialogWidget(MngDlgWindow):
     def restoreDialog(self, action):
         '''given the action details, restore dialog.
         action(Dict): this must be a valid output created by self.checkInputValid'''
-        choiceIdx = list(ACTIONDICT.keys()).index(action["action"])
+        choiceIdx = list(self.actionDict.keys()).index(action["action"])
         self.ui.actionCB.setCurrentIndex(choiceIdx)
         self.selectAction(choiceIdx)
         for key, info in action['rWidgetSetups'].items():
@@ -314,9 +316,22 @@ class MngDialogWidget(MngDlgWindow):
             else:
                 button.toggled.connect(lambda isChecked, val = val: frame.buttonToggle(isChecked, val))
 
-class MngListWidget(QListWidget):
+class MngDialogWidget(BaseDialogWidget):
     def __init__(self, parent):
         super().__init__(parent)
+        self.actionDict = MNGACTIONDICT
+        self.ui.actionCB.addItems(self.actionDict.keys())
+
+class PlotDialogWidget(BaseDialogWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.actionDict = PLOTACTIONDICT
+        self.ui.actionCB.addItems(self.actionDict.keys())
+
+class BaseListWidget(QListWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.DialogWidget = None
         self._nextAction = None
         self.connectEvents()
         
@@ -343,16 +358,20 @@ class MngListWidget(QListWidget):
             insertAct.triggered.connect(lambda: self.insertNewEvent(target))
             editAct = QAction("edit")
             editAct.triggered.connect(lambda: self.editExistingEvent(self.currentItem()))
+            deleteAct = QAction("delete")
+            deleteAct.triggered.connect(lambda: self.deleteExistingEvent(self.currentItem()))
             cancelAct = QAction("cancel")
             
             if target:
                 self.setCurrentItem(target)
             if not target or not target.statusTip():
                 editAct.setDisabled(True)
+                deleteAct.setDisabled(True)
             
             menu.addAction(insertAct)
             menu.addAction(editAct)
-            menu.addAction(cancelAct)
+            menu.addAction(editAct)
+            menu.addAction(deleteAct)
             menu.exec_(ev.globalPos())
         else:
             super().mousePressEvent(ev)
@@ -362,7 +381,7 @@ class MngListWidget(QListWidget):
         print('pop up window')
     
     def editExistingEvent(self, target):
-        dlg = MngDialogWidget(self)
+        dlg = self.DialogWidget(self)
         dlg.setWindowTitle("Setup New Action")
         actionString = target.statusTip()
         dlg.restoreDialog(eval(actionString))
@@ -375,7 +394,7 @@ class MngListWidget(QListWidget):
             
     def insertNewEvent(self, target):
         idx = self.row(target)
-        dlg = MngDialogWidget(self)
+        dlg = self.DialogWidget(self)
         dlg.setWindowTitle("Setup New Action")
         button = dlg.exec()
         if button:
@@ -388,7 +407,9 @@ class MngListWidget(QListWidget):
             item.setStatusTip(repr(self.nextAction()))
             #item.dataDialog = dlg
             self.setNextAction(None)
-            
+
+    def deleteExistingEvent(self, target):
+        self.takeItem(self.row(target))
     # ==========================
     # Action Methods
     # ==========================
@@ -401,20 +422,26 @@ class MngListWidget(QListWidget):
         text = text.replace("'", "")
         return text
     
-    def compileActions(self):
-        print('compile actions')
-    
     def resetActions(self):
         for row in range(self.count()-1, -1, -1):
             if self.item(row).text() != '':
                 self.takeItem(row)
-        print('popUpWindow')
 
     def nextAction(self):
         return self._nextAction
     
     def setNextAction(self, action):
         self._nextAction = action
+
+class MngListWidget(BaseListWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.DialogWidget = MngDialogWidget
+
+class PlotListWidget(BaseListWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.DialogWidget = PlotDialogWidget
         
 MngTabUI, MngTabWindow = uic.loadUiType("UI/mngTab.ui")
 class MngTabWidget(MngTabWindow):
@@ -433,18 +460,24 @@ class MngTabWidget(MngTabWindow):
     def actList(self):
         return self.ui.actionList
     
+    def dataManager(self):
+        return self._dataManager
+    
     def connectEvents(self):
-        self.ui.compileBtn.clicked.connect(self.actList().compileActions)
+        self.ui.compileBtn.clicked.connect(self.compileActions)
         self.ui.resetBtn.clicked.connect(self.actList().resetActions)
         self.ui.dataFileBtn.clicked.connect(self.selectDataFile)
+        self.ui.loadBtn.clicked.connect(self.openMethod)
+        self.ui.saveBtn.clicked.connect(self.saveMethod)
         
     def selectDataFile(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","All Files (*);;Python Files (*.py)", options=options)
         if fileName:
+            mngTabs = self.parent().parent()
             self._dataManager = DataManager(fileName)
-            self._infoData = self._dataManager.createInfoData()
+            mngTabs.setTabText(mngTabs.currentIndex(), self._dataManager.docInfo('name'))
             self.updataInfoWindows()
             for key, val in self._infoData.items():
                 print(key, val)
@@ -456,11 +489,187 @@ class MngTabWidget(MngTabWindow):
         self._infoWindows['plotData'] = plotDataInfoTable
         
     def updataInfoWindows(self):
-        rawinfoWgt = self._infoWindows['raw']
-        rawinfoWgt.clear()
+        self._infoData = self._dataManager.createInfoData()
+        rawDataWindow = self._infoWindows['raw']
+        dataWindow = self._infoWindows['data']
+        variableWindow = self._infoWindows['variables']
+        plotDataWindow = self._infoWindows['plotData']
+        for window in self._infoWindows.values():
+            window.clear()
         if self._infoData['raw']:
-            rawinfoWgt.addItems(self._infoData['raw'])
-            rawinfoWgt.scrollToItem(rawinfoWgt.item(0))
+            rawDataWindow.addItems(self._infoData['raw'])
+            rawDataWindow.scrollToItem(rawDataWindow.item(0))
+        if self._infoData['data']:
+            dataWindow.setColumnCount(len(self._infoData['data'][0]))
+            dataWindow.setHorizontalHeaderLabels(self._infoData['data'][0])
+            for y in range(1, len(self._infoData['data'])):
+                if dataWindow.rowCount() <= y:
+                    dataWindow.insertRow(dataWindow.rowCount())
+                for x in range(len(self._infoData['data'][0])):
+                    print(self._infoData['data'][y][x])
+                    item = QTableWidgetItem(str(self._infoData['data'][y][x]))   # create a new Item
+                    dataWindow.setItem(y-1, x, item)
+        if self._infoData['variables']:
+            i = 0
+            variableWindow.setHorizontalHeaderLabels(['key', 'value'])
+            for key, val in self._infoData['variables'].items():
+                if variableWindow.rowCount() <= i:
+                    variableWindow.insertRow(variableWindow.rowCount())
+                variableWindow.setItem(i, 0, QTableWidgetItem(key))
+                variableWindow.setItem(i, 1, QTableWidgetItem(str(val)))
+                i+=1
+        if self._infoData['plotData']:
+            plotDataWindow.setColumnCount(len(self._infoData['plotData'].keys()))
+            plotDataWindow.setHorizontalHeaderLabels(list(self._infoData['plotData'].keys()))
+            for x, data in enumerate(self._infoData['plotData'].values()):
+                for y, val in enumerate(data):
+                    if plotDataWindow.rowCount() <= y:
+                        plotDataWindow.insertRow(plotDataWindow.rowCount())
+                    plotDataWindow.setItem(y, x, QTableWidgetItem(str(val)))
+                
+    def compileActions(self):
+        if not self._dataManager:
+            return
+        for x in range(self.actList().count()-1):
+            action = self.actList().item(x).statusTip()
+            if not action:
+                continue
+            self.excecuteAction(eval(action))
+        self.updataInfoWindows()
+    
+    def excecuteAction(self,action):
+        func = MNGACTIONDICT[action['action']]['func']
+        print(action)
+        rparam = action['rParam'].values()
+        oparam = action['oParam']
+        method = getattr(self._dataManager, func)
+        method(*rparam, **oparam)
+    
+    def saveMethod(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "method.txt","Method Files (*.txt);;All Files (*)", options=options)
+        if fileName:
+            actions = self.methodToString()
+            if not actions:
+                return
+            file = open(fileName,'w')
+            file.write(actions)
+            file.close()
+            
+    def methodToString(self):
+        actions = '['
+        for x in range(self.actList().count()-1):
+            action = self.actList().item(x).statusTip()
+            if not action:
+                continue
+            actions += action + ',\n'
+        if actions == '[':
+            return False
+        return actions[:-2] + ']'
+            
+    def openMethod(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","Method Files (*.txt);;All Files (*)", options=options)
+        if fileName:
+            try:
+                text = open(fileName,'r').read()
+                actions = eval(text)
+                self.restoreActions(actions)
+            except:
+                print('error')
+                return
+            
+    def restoreActions(self, actions):
+        self.actList().resetActions()
+        for i, action in enumerate(actions):
+            self.actList().insertItem(i, self.actList().actionToText(action))
+            item = self.actList().item(i)
+            item.setStatusTip(repr(action))
+
+PlotTabUI, PlotTabWindow = uic.loadUiType("UI/plotTab.ui")
+class PlotTabWidget(PlotTabWindow):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.ui = PlotTabUI()
+        self.ui.setupUi(self)
+        self.connectEvents()
+        self.plotter = None
+        self.mngTabs = None
+        self.canvas = None
+    
+    def actList(self):
+        return self.ui.actionList
+    
+    def connectEvents(self):
+        self.ui.resetBtn.clicked.connect(self.actList().resetActions)
+                
+    def compileActions(self):
+        self.plotter.resetFig(True)
+        self.initDataManagers()
+        for x in range(self.actList().count()-1):
+            action = self.actList().item(x).statusTip()
+            if not action:
+                continue
+            self.excecuteAction(eval(action))
+    
+    def initDataManagers(self):
+        dataManagers = []
+        for mngTab in [self.mngTabs.widget(count) for count in range(self.mngTabs.count())]:
+            if isinstance(mngTab, MngTabWidget):
+                mngTab.compileActions()
+                dataManagers.append(mngTab.dataManager())
+            else:
+                dataManagers.append(None)
+        self.plotter.setDataManager(dataManagers)
+    
+    def excecuteAction(self,action):
+        func = PLOTACTIONDICT[action['action']]['func']
+        rparam = action['rParam'].values()
+        oparam = action['oParam']
+        method = getattr(self.plotter, func)
+        method(*rparam, **oparam)
+    
+    def saveMethod(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "method.txt","Method Files (*.txt);;All Files (*)", options=options)
+        if fileName:
+            actions = self.methodToString()
+            if not actions:
+                return
+            file = open(fileName,'w')
+            file.write(actions)
+            file.close()
+            
+    def methodToString(self):
+        actions = '['
+        for x in range(self.actList().count()-1):
+            action = self.actList().item(x).statusTip()
+            if not action:
+                continue
+            actions += action + ',\n'
+        if actions == '[':
+            return False
+        return actions[:-2] + ']'
         
-        self._infoWindows['data'].clear()
-        
+    def openMethod(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","Method Files (*.txt);;All Files (*)", options=options)
+        if fileName:
+            try:
+                text = open(fileName,'r').read()
+                actions = eval(text)
+                self.restoreActions(actions)
+            except:
+                print('error')
+                return
+            
+    def restoreActions(self, actions):
+        self.actList().resetActions()
+        for i, action in enumerate(actions):
+            self.actList().insertItem(i, self.actList().actionToText(action))
+            item = self.actList().item(i)
+            item.setStatusTip(repr(action))

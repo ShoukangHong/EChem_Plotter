@@ -109,7 +109,7 @@
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="QPushButton" name="subplotPB">
+           <widget class="QPushButton" name="plotLoadPB">
             <property name="maximumSize">
              <size>
               <width>120</width>
@@ -120,12 +120,12 @@
              <enum>Qt::LeftToRight</enum>
             </property>
             <property name="text">
-             <string>Subplot...</string>
+             <string>Load</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="stylesPB">
+           <widget class="QPushButton" name="plotSavePB">
             <property name="maximumSize">
              <size>
               <width>120</width>
@@ -133,7 +133,7 @@
              </size>
             </property>
             <property name="text">
-             <string>Styles...</string>
+             <string>Save</string>
             </property>
            </widget>
           </item>
@@ -158,9 +158,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="SavePB">
+           <widget class="QPushButton" name="saveImagePB">
             <property name="text">
-             <string>Save</string>
+             <string>Save Image</string>
             </property>
            </widget>
           </item>
