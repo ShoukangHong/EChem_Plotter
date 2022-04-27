@@ -93,7 +93,7 @@ class DataManager:
                 address += char
         return address[1:-1]
     
-    def formatRawData(self, spliter = '\t', starter = None, ender = None):
+    def formatRawData(self, spliter = '\t', starter = None, ender = None, maxLine = 99999999):
         '''given raw data, format it to meet certain criteria.
         spliter, starter, ender, (str): determines the way to deal with raw data
         '''
@@ -108,7 +108,7 @@ class DataManager:
         self._header = spliter(self._rawData[i].strip())
         i += 1
         
-        while i < len(self._rawData) and not ender(self._rawData[i]):
+        while i < len(self._rawData) and i < maxLine and not ender(self._rawData[i]):
             if self._rawData[i] != '':
                 line = [string for string in spliter(self._rawData[i].strip())]
                 self._data.append(line)
@@ -207,7 +207,7 @@ class DataManager:
             if turnhandler(i, allValues[i], self.variables(), self.plotDataSet()):
                 turn += 1
             i += 1
-        end = i
+        end = max(start, i - 1)
         
         for i, targetLabel in enumerate(inputLabels):
             plotData = self.getPlotData(targetLabel)
@@ -246,7 +246,26 @@ class DataManager:
                 self.plotDataSet()[outputLabels[i]] = PlotData(outputLabels[i], values[start:end:step])
             else:
                 plotData.setValues(values[start:end:step])
-            
+
+    def filterPlotDataByFunc(self, label, inputLabels, funcString = '', outputLabels = None):
+        '''
+        '''
+        values = self.getPlotDataValues(label)
+        func = self.createDataHandler(funcString)
+        filterList = [func(i, val, self.variables(), self.plotDataSet()) for i, val in enumerate(values)]
+        def filterByList(inputValues):
+            outPut = []
+            for i, val in enumerate(inputValues):
+                if filterList[i]:
+                    outPut.append(val)
+            return outPut
+        for i, targetLabel in enumerate(inputLabels):
+            plotData = self.getPlotData(targetLabel)
+            filteredValues = filterByList(plotData.values())
+            if outputLabels:
+                self.plotDataSet()[outputLabels[i]] = PlotData(outputLabels[i], filteredValues)
+            else:
+                plotData.setValues(filteredValues)
     # =======================================
     # function and variable creaters
     # =======================================
@@ -321,14 +340,14 @@ class DataManager:
     def getShortList(self, dataList):
         if not dataList:
             return []
-        if len(dataList) < 30:
+        if len(dataList) < 400:
             return dataList[:]
         else:
             if isinstance(dataList[0], list):
                 placeHolder = [['...' for i in range(len(dataList[0]))]]
             else:
                 placeHolder = ['...']
-            return dataList[:10]+placeHolder+dataList[len(dataList)//2-2:len(dataList)//2+2]+placeHolder+dataList[-10:]
+            return dataList[:100]+placeHolder+dataList[len(dataList)//2-50:len(dataList)//2+50]+placeHolder+dataList[-100:]
     # def __str__(self):
     #     print('\t'.join(self._header))
     #     print('\n'.join(['\t'.join([str(num) for num in line]) for line in self._data]))

@@ -178,8 +178,10 @@ class Ui_MainWindow(BaseUI):
         
     def saveImage(self):
         options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(self.subjectWindow,"QFileDialog.getSaveFileName()", "figure.tif","Images (*.tif *.png *.jpg);;All Files (*)", options=options)
+        direct = ''
+        if isinstance(self.mngTabs.currentWidget(), MngTabWidget) and self.mngTabs.currentWidget().dataManager():
+            direct = self.mngTabs.currentWidget().dataManager().docInfo('path') + self.mngTabs.currentWidget().dataManager().docInfo('name') + '.tif'   
+        fileName, _ = QFileDialog.getSaveFileName(self.subjectWindow,"QFileDialog.getSaveFileName()", direct,"Images (*.tif *.png *.jpg);;All Files (*)", options=options)
         if fileName:
             PLOTTER.pyplot().savefig(fileName, dpi=300, bbox_inches="tight")
 # setattr(BaseUI, 'retranslateUi', retranslateUi)

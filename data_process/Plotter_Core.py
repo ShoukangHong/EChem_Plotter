@@ -91,7 +91,7 @@ class DataManager:
                 address += char
         return address[1:-1]
     
-    def formatRawData(self, spliter = None, starter = None, ender = None):
+    def formatRawData(self, spliter = None, starter = None, ender = None, maxLine = 999999999):
         '''given raw data, format it to meet certain criteria.
         spliter, starter, ender, (str): determines the way to deal with raw data
         '''
@@ -106,12 +106,11 @@ class DataManager:
             self._header = spliter(rawData[i].strip())
             i += 1
             
-            while i < len(rawData) and not ender(rawData[i]):
+            while i < len(rawData) and i < maxLine and not ender(rawData[i]):
                 if rawData[i] != '':
                     line = [string for string in spliter(rawData[i].strip())]
                     self._data.append(line)
                 i += 1
-        # del self._rawData
     
     # def truncateData(self, step = 1, start = 0, end = None):
     #     if end == None:

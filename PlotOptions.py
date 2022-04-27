@@ -80,6 +80,17 @@ plot = { 'func': 'plot',
         'yDataManagerIndex': {'term': 'yDataManagerIndex', 'type': int, 'Text':QIntValidator(0,20), 'desc':' Get y plotdata from data manager with this index. If not specified, use active data manager.'},
         'label': {'term': 'legend Name', 'type': str, 'Text':True, 'desc':' the legend that will be desplayed'}}}
 
+setScale = { 'func': 'setAxScale',
+    'rParam':{},
+    'oParam':{'left':{'term': 'left', 'type': float, 'Text':QDoubleValidator(), 'desc':' the left position'},
+              'right':{'term': 'right', 'type': float, 'Text':QDoubleValidator(), 'desc':' the right position'},
+              'bottom':{'term': 'bottom', 'type': float, 'Text':QDoubleValidator(), 'desc':' the bottom position'},
+              'top':{'term': 'top', 'type': float, 'Text':QDoubleValidator(), 'desc':' the top position'},
+              'leftBlank':{'term': 'left blank', 'type': float, 'Text':QDoubleValidator(), 'desc':' the left blank ratio'},
+              'rightBlank':{'term': 'right blank', 'type': float, 'Text':QDoubleValidator(), 'desc':' the right blank ratio'},
+              'bottomBlank':{'term': 'bottom blank', 'type': float, 'Text':QDoubleValidator(), 'desc':' the bottom blank ratio'},
+              'topBlank':{'term': 'top blank', 'type': float, 'Text':QDoubleValidator(), 'desc':' the top blank ratio'}}}
+
 showLegends = { 'func': 'showLegends',
     'rParam':{},
     'oParam':{'loc':{'term': 'legend Location', 'type': str, 'option': {'ur':'upper right', 'ul':'upper left', 'll': 'lower left', 'lr':'lower right', 'r': 'right', 'l': 'center left'}, 'desc':' the legend position ulrl refers to up, low, right left'}}}
@@ -97,5 +108,6 @@ PLOTACTIONDICT = {
     'Set Y Axis Label': setYAxLabel,
     'Set Title': setTitle,
     'Plot':plot,
+    'Set Scale': setScale ,
     'Show Legends': showLegends 
 }

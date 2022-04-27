@@ -69,7 +69,8 @@ formatRawData = { 'func': 'formatRawData',
         'spliter': {'term': 'Split Text', 'type': str, 'option': {'Tab': '\t', 'Comma':',', 'Text': True}, 'desc':'use this parameter to split each row of data'}}, 
     'oParam':{
         'starter': {'term': 'Start Text', 'type': str, 'Text': True, 'desc':'if a line contains this parameter, start data collection(inclusive)'},
-        'ender': {'term': 'End Text', 'type': str, 'Text': True, 'desc':'if a line contains this parameter, end data collection(exclusive)'}}}
+        'ender': {'term': 'End Text', 'type': str, 'Text': True, 'desc':'if a line contains this parameter, end data collection(exclusive)'},
+        'maxLine': {'term': 'Max line', 'type': int, 'Text': QIntValidator(), 'desc':'the max number of lines to import'}}}
 
 addVariable = { 'func': 'createVariable',
     'rParam':{
@@ -85,7 +86,7 @@ createPlotData = { 'func': 'createPlotData',
         'funcString':{'term':'function', 'type': str, 'Text': True, 'desc':formulaHelp},
         'sigfig':{'term':'Sigfig', 'type': int, 'Text': QIntValidator(1, 100), 'desc':'set sig fig of the plot data'}}}
 
-modifyPlotData = { 'func': 'modifyPlotData',
+modifyPlotData = { 'func': 'modifyPlotDataValues',
     'rParam':{
         'label':{'term':'Name', 'type': str, 'Text': nameValidator, 'desc':'the name of plot data to modify.'},
         'funcString':{'term':'function', 'type': str, 'Text': True, 'desc':formulaHelp}},
@@ -110,6 +111,14 @@ truncateByTurn = { 'func': 'truncatePlotDataByTurn',
         'startTurn': {'term':'Start Turn', 'type':int, 'Text':QIntValidator(),'desc': 'truncate data before the start turn, if disabled start at turn one.'},
         'endTurn': {'term':'End Turn', 'type':int, 'Text':QIntValidator(),'desc': 'truncate data after the end value, if disabled end after turn one.'}}}
 
+filterByFunc = { 'func': 'filterPlotDataByFunc',
+    'rParam':{
+        'label':{'term':'Plot Data Name', 'type': str, 'Text': nameValidator, 'desc': 'the name of plot data used to determine data range by Turn'},
+        'inputLabels':{'term':'Input', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of input plot data that are about to truncate'}, 
+        'funcString':{'term':'function', 'type': str, 'Text':True, 'desc': 'the function to do filtering'}}, 
+    'oParam':{
+        'outputLabels':{'term':'Output', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data.'}}}
+
 # ==========================
 # action Dictionary
 # ==========================
@@ -120,5 +129,6 @@ MNGACTIONDICT = {
     'Create Plot Data':createPlotData,
     'Modify Plot Data':modifyPlotData,
     'Truncate Plot Data By Value':truncateByValue,
-    'Truncate Plot Data By Turn':truncateByTurn
+    'Truncate Plot Data By Turn':truncateByTurn,
+    'Fliter Plot Data By Function':filterByFunc
     }
