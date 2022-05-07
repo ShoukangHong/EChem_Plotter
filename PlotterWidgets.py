@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QListWidget, QMenu, QAction, QMessageBox, QDialog,
 from PyQt5 import uic, QtCore
 from MngOptions import MNGACTIONDICT
 from PlotOptions import PLOTACTIONDICT
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QDoubleValidator, QIntValidator
 from Plotter_Core import DataManager, EchemPlotter
 import json
 MainUI, MainWindow = uic.loadUiType("UI/mainWindow.ui")
@@ -70,9 +70,6 @@ class MngDialogFrame(QFrame):
             result.append({})
             if isinstance(child, QRadioButton):
                 result[-1]['value'] = child.isChecked()
-            # elif isinstance(child, QComboBox):
-            #     result.append({})
-            #     result[-1]['value'] = obj.currentIndex()
             elif isinstance(child, QLineEdit):
                 result[-1]['value'] = child.text()
         
@@ -89,8 +86,6 @@ class MngDialogFrame(QFrame):
         for i, child in enumerate(self.children()):
             if isinstance(child, QRadioButton) and setup[i]['value']:
                 child.setChecked(setup[i]['value'])
-            # elif isinstance(child, QComboBox):
-            #     child.setCurrentIndex(setup[i]['value'])
             elif isinstance(child, QLineEdit):
                 child.setText(setup[i]['value'])
                 self.lineEditChanged(child)
@@ -333,6 +328,7 @@ class BaseListWidget(QListWidget):
         super().__init__(parent)
         self.DialogWidget = None
         self._nextAction = None
+        self._clipboard = None
         self.connectEvents()
         
     def connectEvents(self):
@@ -342,11 +338,17 @@ class BaseListWidget(QListWidget):
     # Signal Handlers
     # ==========================
     def keyPressEvent(self, ev):
+        i = self.currentRow()
+        item = self.currentItem()
         if ev.key() == QtCore.Qt.Key_Delete:
-            i = self.currentRow()
-            item = self.currentItem()
             if item.text() != '':
                 self.takeItem(i)
+        elif ev.modifiers() and QtCore.Qt.ControlModifier and ev.key() == QtCore.Qt.Key_C:
+            if item.statusTip():
+                self.copyEvent(item)
+        elif ev.modifiers() and QtCore.Qt.ControlModifier and ev.key() == QtCore.Qt.Key_V:
+            if self._clipboard:
+                self.pasteEvent(item)
         else:
             super().keyPressEvent(ev)
             
@@ -358,6 +360,10 @@ class BaseListWidget(QListWidget):
             insertAct.triggered.connect(lambda: self.insertNewEvent(target))
             editAct = QAction("edit")
             editAct.triggered.connect(lambda: self.editExistingEvent(self.currentItem()))
+            copyAct = QAction("copy")
+            copyAct.triggered.connect(lambda: self.copyEvent(self.currentItem()))
+            pasteAct = QAction("paste")
+            pasteAct.triggered.connect(lambda: self.pasteEvent(self.currentItem()))
             deleteAct = QAction("delete")
             deleteAct.triggered.connect(lambda: self.deleteExistingEvent(self.currentItem()))
             cancelAct = QAction("cancel")
@@ -366,11 +372,15 @@ class BaseListWidget(QListWidget):
                 self.setCurrentItem(target)
             if not target or not target.statusTip():
                 editAct.setDisabled(True)
+                copyAct.setDisabled(True)
                 deleteAct.setDisabled(True)
+            if not self._clipboard:
+                pasteAct.setDisabled(True)
             
             menu.addAction(insertAct)
             menu.addAction(editAct)
-            menu.addAction(editAct)
+            menu.addAction(copyAct)
+            menu.addAction(pasteAct)
             menu.addAction(deleteAct)
             menu.exec_(ev.globalPos())
         else:
@@ -407,6 +417,20 @@ class BaseListWidget(QListWidget):
             item.setStatusTip(repr(self.nextAction()))
             #item.dataDialog = dlg
             self.setNextAction(None)
+
+    def copyEvent(self, target):
+        self._clipboard = target.statusTip()
+        
+    def pasteEvent(self, target):
+        if not self._clipboard:
+            return
+        idx = self.row(target)
+        while idx > 0 and self.item(idx - 1).text() == '':
+            idx-= 1
+        self.insertItem(idx, '')
+        text = self.actionToText(eval(self._clipboard))
+        self.item(idx).setText(text)
+        self.item(idx).setStatusTip(self._clipboard)
 
     def deleteExistingEvent(self, target):
         self.takeItem(self.row(target))
@@ -604,17 +628,16 @@ class PlotTabWidget(PlotTabWindow):
     
     def connectEvents(self):
         self.ui.resetBtn.clicked.connect(self.actList().resetActions)
-                
+    
     def compileActions(self):
         self.plotter.resetFig(True)
-        self.initDataManagers()
         for x in range(self.actList().count()-1):
             action = self.actList().item(x).statusTip()
             if not action:
                 continue
             self.excecuteAction(eval(action))
     
-    def initDataManagers(self):
+    def compileDataManagers(self):
         dataManagers = []
         for mngTab in [self.mngTabs.widget(count) for count in range(self.mngTabs.count())]:
             if isinstance(mngTab, MngTabWidget):
@@ -673,3 +696,44 @@ class PlotTabWidget(PlotTabWindow):
             self.actList().insertItem(i, self.actList().actionToText(action))
             item = self.actList().item(i)
             item.setStatusTip(repr(action))
+
+FormatDlgUI, FormatDlgWindow = uic.loadUiType("UI/formatDialog.ui")
+
+class FormatDialog(FormatDlgWindow):
+    def __init__(self, parent, imageFormat):
+        super().__init__(parent)
+        self.ui = FormatDlgUI()
+        self.ui.setupUi(self)
+        self.setupvalidator()
+        self.connectEvents()
+        self.loadFormat(imageFormat)
+    
+    def setupvalidator(self):
+        self.ui.heightLE.setValidator(QDoubleValidator(1, 100, 2))
+        self.ui.widthLE.setValidator(QDoubleValidator(1, 100, 2))
+        self.ui.resolutionLE.setValidator(QIntValidator(10, 9999))
+    
+    def connectEvents(self):
+        self.ui.buttonBox.accepted.connect(self.accept)
+        self.ui.buttonBox.rejected.connect(self.reject)
+        
+    def accept(self):
+        self.saveFormat()
+        super().accept()
+
+    def loadFormat(self, imageFormat):
+        self.ui.formatCB.setCurrentText(imageFormat['format'])
+        self.ui.compressionCB.setCurrentText(imageFormat['compression'])
+        self.ui.resolutionLE.setText(str(imageFormat['resolution']))
+        self.ui.heightLE.setText(str(imageFormat['height']))
+        self.ui.widthLE.setText(str(imageFormat['width']))
+
+    def saveFormat(self):
+        imageFormat = {}
+        imageFormat['format'] = self.ui.formatCB.currentText()
+        imageFormat['compression'] = self.ui.compressionCB.currentText()
+        imageFormat['resolution'] = int(self.ui.resolutionLE.text())
+        imageFormat['height'] = float(self.ui.heightLE.text())
+        imageFormat['width'] = float(self.ui.widthLE.text())
+        self.parent().ui.setImageFormat(imageFormat)
+    

@@ -108,9 +108,9 @@
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="plotPB">
+           <widget class="QPushButton" name="compileAndPlotPB">
             <property name="text">
-             <string>Plot</string>
+             <string>Compile and Plot</string>
             </property>
            </widget>
           </item>
@@ -409,7 +409,7 @@
      <x>0</x>
      <y>0</y>
      <width>1064</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menua">
@@ -429,7 +429,14 @@
      <string>Help</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuSetting">
+    <property name="title">
+     <string>Setting</string>
+    </property>
+    <addaction name="menuImageFormat"/>
+   </widget>
    <addaction name="menua"/>
+   <addaction name="menuSetting"/>
    <addaction name="menuHelp"/>
   </widget>
   <action name="menuNewDataMethod">
@@ -495,6 +502,16 @@
   <action name="menuLoadTemplate">
    <property name="text">
     <string>Load Template</string>
+   </property>
+  </action>
+  <action name="menuImageFormat">
+   <property name="text">
+    <string>Image Format</string>
+   </property>
+  </action>
+  <action name="actionDefault_Template">
+   <property name="text">
+    <string>Image Setting</string>
    </property>
   </action>
  </widget>

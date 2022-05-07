@@ -1,0 +1,1 @@
+{'format': '.png', 'compression': 'LZW', 'resolution': 200, 'height': 6.0, 'width': 8.0}

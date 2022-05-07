@@ -432,7 +432,7 @@ class EchemPlotter:
         if clear:
             self.figure().clear()
             plt.clf()
-            #plt.close(self.figure())
+            plt.cla()
         plt.figure(self._figureCount)
     
     # =======================================

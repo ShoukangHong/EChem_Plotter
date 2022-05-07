@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import *
 # from qgis.gui import QgsMapCanvas
 import Plotter_Core
 from PyQt5 import uic, QtCore
-from PlotterWidgets import MngTabWidget, PlotTabWidget
+from PlotterWidgets import MngTabWidget, PlotTabWidget, FormatDialog
 
 PLOTTER = Plotter_Core.EchemPlotter()
 BaseUI, Window = uic.loadUiType("UI/mainWindow.ui")
@@ -19,6 +19,13 @@ BaseMngTabUI, MngTab = uic.loadUiType("UI/mngTab.ui")
 _oldFunc = BaseUI.retranslateUi
 
 ROOT = INFOTABS = MNGTABS = PLTLIST = CANVAS = None
+CONFIG = {'imageFormatDir': 'ImageFormat.txt', 'imageFormat':None, 'canvasMH':400, 'canvasMW':600}
+DEFALTIMAGEFORMAT={
+    'format': '.tif',
+    'compression':'LZW',
+    'resolution': 600,
+    'height':6,
+    'width': 8}
 
 class Ui_MainWindow(BaseUI):
     def setupUi(self, mainWindow):
@@ -26,9 +33,9 @@ class Ui_MainWindow(BaseUI):
         mainWindow.ui = self
         self.connectEvents(mainWindow)
         self.setGlobals()
-        self.subjectWindow = mainWindow
         
     def retranslateUi(self, mainWindow):
+        self.subjectWindow = mainWindow
         self.canvas.deleteLater()
         fig, ax = PLOTTER.newFigure(1, 1, True)
         self.canvas = FigureCanvasQTAgg(fig)
@@ -36,10 +43,12 @@ class Ui_MainWindow(BaseUI):
         self.toolbar = NavigationToolbar2QT(self.canvas, mainWindow)
         self.verticalLayout_4.addWidget(self.toolbar)
         self.verticalLayout_4.addWidget(self.canvas)
+        self.loadImageFormat()
         ax.plot([0,1,2,3,4], [10,1,20,3,40])
         self.addInitialWidgets(mainWindow)
         super().retranslateUi(mainWindow)
-    
+
+
     def setGlobals(self):
         global ROOT, INFOTABS, MNGTABS, PLTLIST, CANVAS
         ROOT = self
@@ -56,6 +65,7 @@ class Ui_MainWindow(BaseUI):
         self.plotActionWidget = PlotTabWidget(self.pltTabs)
         self.pltTabs.insertTab(0, self.plotActionWidget, 'Plot Method')
         self.plotActionWidget.plotter = PLOTTER
+        self.plotActionWidget.ui.plotBtn.clicked.connect(self.plot)
         self.plotActionWidget.mngTabs = self.mngTabs
         self.plotActionWidget.canvas = self.canvas
         
@@ -69,11 +79,12 @@ class Ui_MainWindow(BaseUI):
     
     def connectEvents(self, mainWindow):
         self.mngTabs.currentChanged.connect(self.onTabChanged)
-        self.plotPB.clicked.connect(self.compileAndPlot)
+        self.compileAndPlotPB.clicked.connect(self.compileAndPlot)
         self.plotLoadPB.clicked.connect(self.openPlotMethod)
         self.plotSavePB.clicked.connect(self.savePlotMethod)
         self.menuSaveTemplate.triggered.connect(self.saveTemplate)
         self.menuLoadTemplate.triggered.connect(self.loadTemplate)
+        self.menuImageFormat.triggered.connect(self.imageFormatDialog)
         self.saveImagePB.clicked.connect(self.saveImage)
     
     def onTabChanged(self):
@@ -159,44 +170,67 @@ class Ui_MainWindow(BaseUI):
             file.close()       
 
     def compileAndPlot(self):
-        PLOTTER.pyplot().clf()
-        PLOTTER.pyplot().cla()
-        self.canvas.deleteLater()
-        self.toolbar.deleteLater()
+        try:
+            self.plotActionWidget.compileDataManagers()
+            self.plotActionWidget.compileActions()
+        except Exception as e:
+            print(e)
+            PLOTTER.newFigure(1, 1, True)
+        self.refreshCanvas()
+         
+    def plot(self):
         try:
             self.plotActionWidget.compileActions()
         except Exception as e:
             print(e)
             PLOTTER.newFigure(1, 1, True)
-            
+        self.refreshCanvas()
+    
+    def refreshCanvas(self):
+        self.canvas.deleteLater()
+        self.toolbar.deleteLater()
         self.canvas = FigureCanvasQTAgg(PLOTTER.figure())
         self.canvas.setObjectName("canvas")
         self.toolbar = NavigationToolbar2QT(self.canvas, self.subjectWindow)
         self.verticalLayout_4.addWidget(self.toolbar)
         self.verticalLayout_4.addWidget(self.canvas)
         self.canvas.draw()
-        
+    
     def saveImage(self):
         options = QFileDialog.Options()
         direct = ''
         if isinstance(self.mngTabs.currentWidget(), MngTabWidget) and self.mngTabs.currentWidget().dataManager():
-            direct = self.mngTabs.currentWidget().dataManager().docInfo('path') + self.mngTabs.currentWidget().dataManager().docInfo('name') + '.tif'   
-        fileName, _ = QFileDialog.getSaveFileName(self.subjectWindow,"QFileDialog.getSaveFileName()", direct,"Images (*.tif *.png *.jpg);;All Files (*)", options=options)
+            direct = self.mngTabs.currentWidget().dataManager().docInfo('path') + self.mngTabs.currentWidget().dataManager().docInfo('name') + CONFIG['imageFormat']['format']
+        fileName, _ = QFileDialog.getSaveFileName(self.subjectWindow,"QFileDialog.getSaveFileName()", direct,"Images (*.tif *.tiff *.png *.jpg);;All Files (*)", options=options)
         if fileName:
-            PLOTTER.pyplot().savefig(fileName, dpi=300, bbox_inches="tight")
+            PLOTTER.figure().set_size_inches(CONFIG['imageFormat']['width'], CONFIG['imageFormat']['height'])
+            PLOTTER.pyplot().savefig(fileName, dpi=CONFIG['imageFormat']['resolution'])
 # setattr(BaseUI, 'retranslateUi', retranslateUi)
+    def imageFormatDialog(self):
+        dlg = FormatDialog(self.subjectWindow, CONFIG['imageFormat'])
+        dlg.setWindowTitle("Image Format")
+        button = dlg.exec()
+        if button:
+            dlg.saveFormat()
 
-class PlotterGUI:
-    def __init__(self, root):
-        self._root = root
-        self._mainMenu = None
-        self._dataNB = None
-        self._infoNB = None
-        self._plotterFrm = None
-        self._canvas= None
-        self._terms = {
-            "defaultNBLabel" : "New Method"
-            }
+    def loadImageFormat(self):
+        text = open(CONFIG['imageFormatDir'],'r').read()
+        try:
+            CONFIG['imageFormat'] = eval(text)
+            if not isinstance(CONFIG['imageFormat'], dict):
+               self.resetImageFormat()
+            self.refreshCanvas()
+        except:
+            self.resetImageFormat()
+    
+    def resetImageFormat(self):
+        CONFIG['imageFormat'] = DEFALTIMAGEFORMAT
+    
+    def setImageFormat(self, imageFormat):
+        CONFIG['imageFormat'] = imageFormat
+        file = open(CONFIG['imageFormatDir'],'w')
+        file.write(str(imageFormat))
+        file.close()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -210,3 +244,11 @@ if __name__ == "__main__":
 # [print(key+ ': ' + str(val)) for key, val in ui.__dict__.items()]
 # print(2)
 # [print(key+ ': ' + str(val)) for key, val in ui.infoGB.__dict__.items()]
+        # if CONFIG['imageFormat']['format'] == '.tif' or CONFIG['imageFormat']['format'] == '.tiff':
+        #     if CONFIG['imageFormat']['compression'] == 'LZW':
+        #         compression = CONFIG['imageFormat']['format'][1:] + '_' + 'lzw'
+        #         compression_kwargs={"compression": compression}
+        #         print(compression)
+        #     elif CONFIG['imageFormat']['compression'] == 'ZIP':
+        #         compression = CONFIG['imageFormat']['format'][1:] + '_' + 'zip'
+        #         compression_kwargs={"compression": compression}

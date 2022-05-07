@@ -169,6 +169,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QPushButton" name="plotBtn">
+        <property name="text">
+         <string>Plot</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
