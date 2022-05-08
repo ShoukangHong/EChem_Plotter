@@ -119,6 +119,21 @@ filterByFunc = { 'func': 'filterPlotDataByFunc',
     'oParam':{
         'outputLabels':{'term':'Output', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data.'}}}
 
+savePlotData = { 'func': 'savePlotData',
+    'rParam':{}, 
+    'oParam':{
+        'labels':{'term':'Lables', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of plot data that are about to export, default is all plot data'},
+        'name': {'term':'Save Name', 'type':str, 'Text':nameValidator,'desc': 'the out put file name.'},
+        'step': {'term':'Step', 'type':int, 'Text':QIntValidator(1,1000),'desc': 'step of each data saved, defult is 1, which means no data will be skipped. Set high to reduce file size(but will lose some data)'}}}
+
+note = { 'func': 'note',
+    'rParam':{'note': {'term': 'note', 'type': str, 'Text':True, 'desc':'Write some notes to explain things'}},
+    'oParam':{}}
+
+script = { 'func': 'script',
+    'rParam':{'script': {'term': 'script', 'type': str, 'Text':True, 'desc':'Directly Write code to excecute'}},
+    'oParam':{}}
+
 # ==========================
 # action Dictionary
 # ==========================
@@ -130,5 +145,8 @@ MNGACTIONDICT = {
     'Modify Plot Data':modifyPlotData,
     'Truncate Plot Data By Value':truncateByValue,
     'Truncate Plot Data By Turn':truncateByTurn,
-    'Fliter Plot Data By Function':filterByFunc
+    'Fliter Plot Data By Function':filterByFunc,
+    'Save Plot Data': savePlotData,
+    'Note' : note,
+    'Script': script
     }

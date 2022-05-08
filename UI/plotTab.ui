@@ -171,6 +171,12 @@
       </item>
       <item>
        <widget class="QPushButton" name="plotBtn">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Run the plotter.&lt;/p&gt;&lt;p&gt;It is fast but make sure to run the data managers before using this button.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="text">
          <string>Plot</string>
         </property>

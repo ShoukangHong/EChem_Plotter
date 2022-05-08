@@ -151,6 +151,13 @@ class DataManager:
         func = self.createDataHandler(funcString)
         return [func(i, val, self.variables(), self.plotDataSet()) for i, val in enumerate(values)]
     
+    def clearData(self):
+        self._header= []
+        self._data = []
+        self._variables = {}
+        self._plotDataSet = {}
+        self._eventLog = []
+    
     # =======================================
     # Save
     # =======================================
@@ -163,14 +170,15 @@ class DataManager:
         address = self.__autoAddress(address)
         dataFrame.to_csv(address, header = True, index=False, sep='\t')
         
-    def savePlotData(self, address = None, labels = None, step = 1):
+    def savePlotData(self, labels = None, address = None, name = None, step = 1):
         if not labels:
             labels = [label for label in self._plotDataSet]
         array = numpy.array([self.getPlotDataValues(label)[::step] for label in labels]).transpose()
         dataFrame = pandas.DataFrame(array, columns = labels, dtype = str)
-        if not address:
-            address = self._docInfo['path'] + self._docInfo['name'] + '.txt'
-        address = self.__autoAddress(address)
+        name = name if name else self._docInfo['name']
+        address = address if address else self._docInfo['path'] + name + '.txt'
+        if address == self._docInfo['address']:
+            address = self.__autoAddress(address)
         dataFrame.to_csv(address, header = True, index=False, sep='\t')
     
     def __autoAddress(self, address):
@@ -296,6 +304,11 @@ class DataManager:
         return ender
 
     def createDataHandler(self, string = None):
+        wordSet = set(['val', 'i', 'self', 'funcString'])
+        nameSet = set(self.plotDataSet().keys()).union(set(self.variables().keys()))
+        nameIntersect = set(self.plotDataSet().keys()).intersection(self.variables().keys())
+        assert len(nameIntersect) == 0, "variable/plotData name: " + str(nameIntersect) + ' duplicates!'
+        assert len(wordSet.intersection(nameSet)) == 0, "variable/plotData name: " + str(wordSet.intersection(nameSet)) + ' not allowed!'
         if string == '' or not string:
             return None
         funcString = self.toFunctionString(string)
@@ -475,13 +488,13 @@ class EchemPlotter:
         self._twinYs = [None for _ in range(len(self._axes))]
         return self._figure, self._activeAx
     
-    def setXAxLabel(self, label):
+    def setXAxLabel(self, label, **kwargs):
         '''label(str): Set a label that will be displayed on active x axis.'''
-        self.activeAx().set_xlabel(label)
+        self.activeAx().set_xlabel(label, **kwargs)
         
-    def setYAxLabel(self, label):
+    def setYAxLabel(self, label, **kwargs):
         '''label(str): Set a label that will be displayed on active y axis.'''
-        self.activeAx().set_ylabel(label)
+        self.activeAx().set_ylabel(label, **kwargs)
     
     def addTwinX(self):
         '''add twin x axis and set the twin axis to active'''
@@ -557,10 +570,10 @@ class EchemPlotter:
     def setTickInterval(self, axisType, interval = None, tickNum = None, minor = None, realign = None):
         '''set the tick Intervals
         axisType(str): {'x','y'}, the axis to modify.
-        interval(int): set interval value for each tick.
+        interval(float): set interval value for each tick.
         tickNum(int): Target number of ticks. Will determine interval based on this value. The final tick
             number may not be exactly the tickNumber, because tick increments needs to be 1, 2 or 5 *10^x.
-        minor(int, bool): minor tick number, set True will use auto minor tick, set as number will have the
+        minor(int, bool): minor tick number, set 0 will use auto minor tick, set as number will have the
             (number - 1) of minor tick.
         realign(str): {'s', 'e', 'se'}:realign start/end or start and end point after setting the interval
             's' refers to start and 'e' refers to end.
@@ -581,7 +594,7 @@ class EchemPlotter:
             interval = self.__getInterval(end - start, tickNum)
             locator = plticker.MultipleLocator(base=abs(interval))
             axis.set_major_locator(locator)
-        if minor == True:
+        if minor == 0:
             axis.set_minor_locator(plticker.AutoMinorLocator())
         elif isinstance(minor, int):
             axis.set_minor_locator(plticker.AutoMinorLocator(minor))
@@ -686,3 +699,34 @@ class EchemPlotter:
         '''
         dataManager = self.activeDataManager() if index == None else self._dataManagers[index]
         return dataManager.getPlotDataValues(label)
+    
+if (__name__ == '__main__'):
+    echem = {'E':[[6,6,6,6,6,7,8,7,8,7,8],[13,12,11,10,9,13,13,11,11,9,9]],
+          'C':[[10,10,10,10,10,11,12,11,12],[13,12,11,10,9,13,13,9,9]],
+          'H':[[14,14,14,14,14,15,16,16,16,16,16],[13,12,11,10,9,11,13,12,11,10,9]],
+          'E2':[[18,18,18,18,18,19,20,19,20,19,20],[13,12,11,10,9,13,13,11,11,9,9]],
+          'M':[[22,22,22,22,22,22.33,22.67,23,23.33,23.67,24,24,24,24,24],[13,12,11,10,9,12,11,10,11,12,13,12,11,10,9]]}
+    
+    plotter = {'P':[[2,2,2,2,2,3,4,4,4,3], [6,5,4,3,2,6,6,5,4,4]],
+          'L': [[6,6,6,6,6,7,8],[6,5,4,3,2,2,2]],
+          'O': [[10,10,10,10,10,11,12,12,12,12,12,11],[6,5,4,3,2,2,2,3,4,5,6,6]],
+          'T': [[14,15,16,15,15,15,15],[6,6,6,5,4,3,2]],
+          'T2': [[18,19,20,19,19,19,19],[6,6,6,5,4,3,2]],
+          'E3': [[22,22,22,22,22,23,24,23,24,23,24],[6,5,4,3,2,6,6,4,4,2,2]],
+          'R': [[26,26,26,26,26,27,28,28,28,27,27,28],[6,5,4,3,2,6,6,5,4,4,3,2]]}
+    echemX =[]
+    echemY = []
+    for val in echem.values():
+        echemX += val[0]
+    for val in echem.values():
+        echemY += val[1]
+    plotterX =[]
+    plotterY = []
+    for val in plotter.values():
+        plotterX += val[0]
+    for val in plotter.values():
+        plotterY += val[1]
+    plt.plot([7.5 + val for val in echemX], [7.5 + val for val in echemY], 'bo')
+    plt.plot([7.5 + val for val in plotterX], [7.5 + val for val in plotterY], 'ro')
+    plt.xlim([0, 45])
+    plt.ylim([0, 30])

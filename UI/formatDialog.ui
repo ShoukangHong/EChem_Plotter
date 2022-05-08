@@ -27,7 +27,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="text">
-      <string>TIF/TIFF Comression:</string>
+      <string>Comression(Not Working):</string>
      </property>
     </widget>
    </item>

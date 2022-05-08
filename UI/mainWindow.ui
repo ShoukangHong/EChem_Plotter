@@ -73,6 +73,12 @@
               <height>16777215</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load plot method.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="whatsThis">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="layoutDirection">
              <enum>Qt::LeftToRight</enum>
             </property>
@@ -88,6 +94,12 @@
               <width>120</width>
               <height>16777215</height>
              </size>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save current plot method.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="whatsThis">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Save</string>
@@ -108,14 +120,26 @@
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="compileAndPlotPB">
+           <widget class="QPushButton" name="runAndPlotPB">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Run all data managers, and then plot.&lt;/p&gt;&lt;p&gt;Use this button to plot if you haven't run a data manager after edit it.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="whatsThis">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
-             <string>Compile and Plot</string>
+             <string>Run and Plot</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QPushButton" name="saveImagePB">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save image with the image format setting.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="whatsThis">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Save Image</string>
             </property>
@@ -371,6 +395,12 @@
     </item>
     <item row="0" column="0">
      <widget class="QGroupBox" name="mngGB">
+      <property name="toolTip">
+       <string/>
+      </property>
+      <property name="whatsThis">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="title">
        <string>Data Managers</string>
       </property>
@@ -409,7 +439,7 @@
      <x>0</x>
      <y>0</y>
      <width>1064</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menua">
@@ -420,9 +450,8 @@
     <addaction name="separator"/>
     <addaction name="menuSaveTemplate"/>
     <addaction name="menuLoadTemplate"/>
-    <addaction name="menuSaveImage"/>
-    <addaction name="menuSaveDataMethod"/>
-    <addaction name="menuSavePlotMethod"/>
+    <addaction name="menuLoadDataMethod"/>
+    <addaction name="meunBatchProcess"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -464,9 +493,9 @@
     <string>Save Data</string>
    </property>
   </action>
-  <action name="menuSaveDataMethod">
+  <action name="menuLoadDataMethod">
    <property name="text">
-    <string>Save Data  Method</string>
+    <string>Load Data Method to All</string>
    </property>
   </action>
   <action name="menuOpenData">
@@ -512,6 +541,11 @@
   <action name="actionDefault_Template">
    <property name="text">
     <string>Image Setting</string>
+   </property>
+  </action>
+  <action name="meunBatchProcess">
+   <property name="text">
+    <string>Batch Process</string>
    </property>
   </action>
  </widget>

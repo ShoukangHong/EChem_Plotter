@@ -139,8 +139,6 @@ class BaseDialogWidget(ActionDlgWindow):
         if self.checkInputValid():
             self.parent().setNextAction(self.outPut)
             super().accept()
-        else:
-            pass
         
     def selectAction(self, idx):
         '''handler that deals with selected action of action combo box
@@ -160,7 +158,7 @@ class BaseDialogWidget(ActionDlgWindow):
     def checkInputValid(self):
         '''check the validity of input and store the out put if valid'''
         if self.ui.actionCB.currentIndex() == 0:
-            self.clearResultAndShowError("You haven't choose an action!")
+            self.clearResultAndShowError("Please choose an action!")
             return False
         actionText = self.ui.actionCB.currentText()
         rParams = self.actionDict[actionText]['rParam'].keys()
@@ -193,8 +191,6 @@ class BaseDialogWidget(ActionDlgWindow):
         self.outPut['rWidgetSetups'] = rWidgetSetups
         self.outPut['oWidgetSetups'] = oWidgetSetups
         
-        for key, val in self.outPut.items():
-            print(key + ': ', val)
         return True
     
     def readInput(self, widget, paramDict):
@@ -204,9 +200,9 @@ class BaseDialogWidget(ActionDlgWindow):
             typeFunc = widget.getInput('type')
             paramDict[widget.getInput('key')] = typeFunc(widget.getInput('value'))
             return True
-        except:
+        except Exception as e:
             text = 'Cannot convert ' + str(widget.getInput('value')) + ' to ' + typeFunc.__name__
-            self.clearResultAndShowError(text)
+            self.clearResultAndShowError(text + '\n' + str(e))
             return False
     
     def clearResultAndShowError(self, text):
@@ -332,7 +328,7 @@ class BaseListWidget(QListWidget):
         self.connectEvents()
         
     def connectEvents(self):
-        self.itemDoubleClicked.connect(self.newActionWindow)
+        self.itemDoubleClicked.connect(lambda: self.insertNewEvent(self.currentItem()))
         
     # ==========================
     # Signal Handlers
@@ -385,10 +381,6 @@ class BaseListWidget(QListWidget):
             menu.exec_(ev.globalPos())
         else:
             super().mousePressEvent(ev)
-            
-    def newActionWindow(self, ev):
-        '''create a new action window newActionWindow'''
-        print('pop up window')
     
     def editExistingEvent(self, target):
         dlg = self.DialogWidget(self)
@@ -488,16 +480,18 @@ class MngTabWidget(MngTabWindow):
         return self._dataManager
     
     def connectEvents(self):
-        self.ui.compileBtn.clicked.connect(self.compileActions)
+        self.ui.runBtn.clicked.connect(self.runActions)
         self.ui.resetBtn.clicked.connect(self.actList().resetActions)
         self.ui.dataFileBtn.clicked.connect(self.selectDataFile)
         self.ui.loadBtn.clicked.connect(self.openMethod)
         self.ui.saveBtn.clicked.connect(self.saveMethod)
         
-    def selectDataFile(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","All Files (*);;Python Files (*.py)", options=options)
+    def selectDataFile(self, fileName = None):
+        if not fileName:
+            options = QFileDialog.Options()
+            options |= QFileDialog.DontUseNativeDialog
+            fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "",
+                                                      "Data Files (*.txt *.csv *.mpt *.xlsx *.xlsm *.xls);;All Files (*)", options=options)
         if fileName:
             mngTabs = self.parent().parent()
             self._dataManager = DataManager(fileName)
@@ -551,28 +545,40 @@ class MngTabWidget(MngTabWindow):
                         plotDataWindow.insertRow(plotDataWindow.rowCount())
                     plotDataWindow.setItem(y, x, QTableWidgetItem(str(val)))
                 
-    def compileActions(self):
+    def runActions(self):
         if not self._dataManager:
             return
+        self._dataManager.clearData()
         for x in range(self.actList().count()-1):
             action = self.actList().item(x).statusTip()
             if not action:
                 continue
-            self.excecuteAction(eval(action))
+            self.actList().setCurrentRow(x)
+            try:
+                self.excecuteAction(eval(action))
+            except Exception as e:
+                self.showError(action[:50] + '...failed!\n' + str(e))
+                self.updataInfoWindows()
+                return
         self.updataInfoWindows()
     
     def excecuteAction(self,action):
+        dataManager = self._dataManager
         func = MNGACTIONDICT[action['action']]['func']
-        print(action)
-        rparam = action['rParam'].values()
-        oparam = action['oParam']
-        method = getattr(self._dataManager, func)
-        method(*rparam, **oparam)
+        if func == 'note':
+            return
+        elif func == 'script':
+            eval(action['rParam']['script'])
+        else:
+            rparam = action['rParam'].values()
+            oparam = action['oParam']
+            method = getattr(self._dataManager, func)
+            method(*rparam, **oparam)
     
     def saveMethod(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "method.txt","Method Files (*.txt);;All Files (*)", options=options)
+        fileName, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "method.dmtd","Method Files (*.dmtd)", options=options)
         if fileName:
             actions = self.methodToString()
             if not actions:
@@ -592,18 +598,19 @@ class MngTabWidget(MngTabWindow):
             return False
         return actions[:-2] + ']'
             
-    def openMethod(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","Method Files (*.txt);;All Files (*)", options=options)
+    def openMethod(self, fileName = None):
+        if not fileName:
+            options = QFileDialog.Options()
+            options |= QFileDialog.DontUseNativeDialog
+            fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "",
+                                                      "Method Files (*.dmtd);;All Files (*)", options=options)    
         if fileName:
             try:
                 text = open(fileName,'r').read()
                 actions = eval(text)
                 self.restoreActions(actions)
-            except:
-                print('error')
-                return
+            except Exception as e:
+                self.showError('can not open method: \n' + str(e))
             
     def restoreActions(self, actions):
         self.actList().resetActions()
@@ -611,6 +618,14 @@ class MngTabWidget(MngTabWindow):
             self.actList().insertItem(i, self.actList().actionToText(action))
             item = self.actList().item(i)
             item.setStatusTip(repr(action))
+
+    def showError(self, text):
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Error")
+        msg.setText(text)
+        msg.setIcon(QMessageBox.Critical)
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec_()
 
 PlotTabUI, PlotTabWindow = uic.loadUiType("UI/plotTab.ui")
 class PlotTabWidget(PlotTabWindow):
@@ -629,19 +644,24 @@ class PlotTabWidget(PlotTabWindow):
     def connectEvents(self):
         self.ui.resetBtn.clicked.connect(self.actList().resetActions)
     
-    def compileActions(self):
+    def runActions(self):
         self.plotter.resetFig(True)
         for x in range(self.actList().count()-1):
             action = self.actList().item(x).statusTip()
             if not action:
                 continue
-            self.excecuteAction(eval(action))
+            self.actList().setCurrentRow(x)
+            try:
+                self.excecuteAction(eval(action))
+            except Exception as e:
+                self.showError(action[:50] + '... failed!\n' + str(e))
+                return
     
-    def compileDataManagers(self):
+    def runDataManagers(self):
         dataManagers = []
         for mngTab in [self.mngTabs.widget(count) for count in range(self.mngTabs.count())]:
             if isinstance(mngTab, MngTabWidget):
-                mngTab.compileActions()
+                mngTab.runActions()
                 dataManagers.append(mngTab.dataManager())
             else:
                 dataManagers.append(None)
@@ -649,15 +669,26 @@ class PlotTabWidget(PlotTabWindow):
     
     def excecuteAction(self,action):
         func = PLOTACTIONDICT[action['action']]['func']
-        rparam = action['rParam'].values()
-        oparam = action['oParam']
-        method = getattr(self.plotter, func)
-        method(*rparam, **oparam)
-    
+        plotter = self.plotter
+        if func == 'note':
+            return
+        elif func == 'script':
+            eval(action['rParam']['script'])
+        else:
+            rparam = action['rParam'].values()
+            oparam = {}
+            for key, val in action['oParam'].items():
+                if key == 'kwParams' and isinstance(val, dict):
+                    oparam.update(val)
+                else:
+                    oparam[key] = val
+            method = getattr(self.plotter, func)
+            method(*rparam, **oparam)
+
     def saveMethod(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "method.txt","Method Files (*.txt);;All Files (*)", options=options)
+        fileName, _ = QFileDialog.getSaveFileName(self,"QFileDialog.getSaveFileName()", "method.pmtd","Method Files (*.pmtd)", options=options)
         if fileName:
             actions = self.methodToString()
             if not actions:
@@ -677,18 +708,19 @@ class PlotTabWidget(PlotTabWindow):
             return False
         return actions[:-2] + ']'
         
-    def openMethod(self):
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","Method Files (*.txt);;All Files (*)", options=options)
+    def openMethod(self, fileName = None):
+        if not fileName:
+            options = QFileDialog.Options()
+            options |= QFileDialog.DontUseNativeDialog
+            fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "",
+                                                      "Method Files (*.pmtd);;All Files (*)", options=options)
         if fileName:
             try:
                 text = open(fileName,'r').read()
                 actions = eval(text)
                 self.restoreActions(actions)
-            except:
-                print('error')
-                return
+            except Exception as e:
+                self.showError('can not open method: \n' + str(e))
             
     def restoreActions(self, actions):
         self.actList().resetActions()
@@ -696,6 +728,14 @@ class PlotTabWidget(PlotTabWindow):
             self.actList().insertItem(i, self.actList().actionToText(action))
             item = self.actList().item(i)
             item.setStatusTip(repr(action))
+
+    def showError(self, text):
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Error")
+        msg.setText(text)
+        msg.setIcon(QMessageBox.Critical)
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec_()
 
 FormatDlgUI, FormatDlgWindow = uic.loadUiType("UI/formatDialog.ui")
 
