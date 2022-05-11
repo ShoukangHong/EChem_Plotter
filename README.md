@@ -1,7 +1,7 @@
 # EChem_Plotter
 
 ## Introduction
-For scientific research, some experiments can be highly repetitive and so does their data. 
+In scientific research, some experiments may be highly repetitive, as are their data.
 EChem Plotter is a software designed to ease the plotting of experimental data that has identical format and process procedure.
 With this software, you can program without coding knowledge and use your template to process all the similar data.
 
