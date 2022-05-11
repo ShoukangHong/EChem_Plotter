@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1064</width>
-    <height>909</height>
+    <height>894</height>
    </rect>
   </property>
   <property name="font">
@@ -19,7 +19,17 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>EChem Plotter</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../icon.ico</normaloff>../icon.ico</iconset>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <property name="locale">
+   <locale language="English" country="UnitedStates"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -446,8 +456,6 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="menuNewDataMethod"/>
-    <addaction name="separator"/>
     <addaction name="menuSaveTemplate"/>
     <addaction name="menuLoadTemplate"/>
     <addaction name="menuLoadDataMethod"/>
@@ -457,6 +465,7 @@
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="menuDoc"/>
    </widget>
    <widget class="QMenu" name="menuSetting">
     <property name="title">
@@ -546,6 +555,21 @@
   <action name="meunBatchProcess">
    <property name="text">
     <string>Batch Process</string>
+   </property>
+  </action>
+  <action name="actionExport_Current_Plot_Data">
+   <property name="text">
+    <string>Export Plot Data</string>
+   </property>
+  </action>
+  <action name="actionExport_Data">
+   <property name="text">
+    <string>Export Data</string>
+   </property>
+  </action>
+  <action name="menuDoc">
+   <property name="text">
+    <string>Documentation</string>
    </property>
   </action>
  </widget>

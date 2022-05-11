@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb  1 22:28:13 2022
-
 @author: shouk
 """
 from PyQt5.QtCore import QRegExp
@@ -12,24 +10,56 @@ import re
 # Validators
 # ==========================
 nameValidator = QRegExpValidator(QRegExp(r'^[a-zA-Z_][a-zA-Z0-9_]*$'))
-nameListValidator = QRegExpValidator(QRegExp(r'^[a-zA-Z][a-zA-Z0-9_, ]*$'))
-def nameList(string):
-    names = string.split(',')
-    for i, name in enumerate(names):
-        names[i] = name.strip()
-        if names[i] == '' or not re.match(r'^[a-zA-Z][a-zA-Z0-9_]*$', names[i]):
-            raise ValueError("'" + names[i] + "'" + " is not a valid plot data name")
-    return names
 
 def kwDict(string):
     result = eval('{' + string+'}')
     if isinstance(result, dict):
         return result
     raise ValueError("'" + string + "'" + " is not a valid keyword dictionary string")
-
+    
 # ==========================
 # help texts
 # ==========================
+styleHelp = '''Set marker, line and color with this parameter.
+Format: '[marker][line][color]'  (Each of them is optional, '' is not needed)
+Example: 'or' means circle+red, '+-b' means plus marker + solid line style + blue
+Markers:
+    '.' point marker
+    'o' circle marker
+    '^' triangle_up marker
+    's' square marker
+    '*' star marker
+    '+' plus marker
+    'x' x marker
+    'D' diamond marker
+Lines:
+    '-' solid line style
+    '--' dashed line style
+    '-.' dash-dot line style
+    ':' dotted line style
+Colors:
+    'b' blue
+    'g' green
+    'r' red
+    'c' cyan
+    'm' magenta
+    'y' yellow
+    'k' black
+    'w' white
+'''
+scriptHelp = '''Directly write script to excecute.
+can use these variables:
+    plotter: Class(EchemPlotter),
+    self: Class(PlotTabWidget)
+
+Please refer to the source code for more information
+'''
+
+keyWordHelp = '''Advanced keyword arguments,
+Please use this format:
+    key1:value1, key2: value2, ...
+    
+Please refer to matplotlib documentation: '''
 
 # ==========================
 # action parameters
@@ -44,14 +74,14 @@ newFigure = { 'func': 'newFigure',
 
 setActiveDataManager = { 'func': 'setActiveDataManager',
     'rParam':{
-        'index': {'term': 'index', 'type': int, 'Text':QIntValidator(0,20), 'desc':'Set the manager to plot, start from 0'}}, 
+        'index': {'term': 'Data Manager Index', 'type': int, 'Text':QIntValidator(0,20), 'desc':'Set the data manager to get plot data from, count start from 0'}}, 
     'oParam':{}}
 
 setActiveAx = { 'func': 'setActiveAx',
     'rParam':{
-        'index': {'term': 'index', 'type': int, 'Text':QIntValidator(0,20), 'desc':'Set the axis, start from 0'}}, 
+        'index': {'term': 'Axis Index', 'type': int, 'Text':QIntValidator(0,20), 'desc':'Set the axis, count start from 0'}}, 
     'oParam':{
-        'twin': {'term': 'twin', 'type': str, 'option': {'x': 'x', 'y':'y'}, 'desc':'Set the twin axis'}}}
+        'twin': {'term': 'Twin', 'type': str, 'option': {'x': 'x', 'y':'y'}, 'desc':'Select the twin Axes that shares the chosen axis'}}}
 
 addTwinX = { 'func': 'addTwinX',
     'rParam':{},
@@ -63,43 +93,43 @@ addTwinY = { 'func': 'addTwinX',
 
 setXAxLabel = { 'func': 'setXAxLabel',
     'rParam':{
-        'label': {'term': 'label', 'type': str, 'Text':True, 'desc':'Set the label of active x axis'}},
+        'label': {'term': 'Label', 'type': str, 'Text':True, 'desc':'Set the label of active x axis'}},
     'oParam':{'fontsize':{'term': 'Font size', 'type': int, 'Text':QIntValidator(1,999), 'desc':'Set font size'},
-              'kwParams':{'term': 'keyword parameters', 'type': kwDict, 'Text':True, 'desc':'advanced keyword arguments'}}}
+              'kwParams':{'term': 'Keyword parameters', 'type': kwDict, 'Text':True, 'desc': keyWordHelp + 'matplotlib.axes.Axes.set_xlabel'}}}
 
 setYAxLabel = { 'func': 'setYAxLabel',
     'rParam':{
-        'label': {'term': 'label', 'type': str, 'Text':True, 'desc':'Set the label of active y axis'}},
+        'label': {'term': 'Label', 'type': str, 'Text':True, 'desc':'Set the label of active y axis'}},
     'oParam':{'fontsize':{'term': 'Font size', 'type': int, 'Text':QIntValidator(1,999), 'desc':'Set font size'},
-              'kwParams':{'term': 'keyword parameters', 'type': kwDict, 'Text':True, 'desc':'advanced keyword arguments'}}}
+              'kwParams':{'term': 'Keyword parameters', 'type': kwDict, 'Text':True, 'desc': keyWordHelp + 'matplotlib.axes.Axes.set_ylabel'}}}
 
 setTitle = { 'func': 'setTitle',
     'rParam':{
-        'title': {'term': 'title', 'type': str, 'Text':True, 'desc':'Set the title of active figure'}},
+        'title': {'term': 'Title', 'type': str, 'Text':True, 'desc':'Set the title of active figure'}},
     'oParam':{'fontsize':{'term': 'Font size', 'type': int, 'Text':QIntValidator(1,999), 'desc':'Set font size'},
-        'kwParams':{'term': 'keyword parameters', 'type': kwDict, 'Text':True, 'desc':'advanced keyword arguments'}}}
+        'kwParams':{'term': 'Keyword parameters', 'type': kwDict, 'Text':True, 'desc': keyWordHelp + 'matplotlib.axes.Axes.set_title'}}}
 
 plot = { 'func': 'plot',
     'rParam':{
-        'xDataLabel':{'term': 'xDataLabel', 'type': str, 'Text':nameValidator, 'desc':'choose the x label to plot'},
-        'yDataLabel':{'term': 'yDataLabel', 'type': str, 'Text':nameValidator, 'desc':'choose the y label to plot'}},
+        'xDataLabel':{'term': 'X Axis Label', 'type': str, 'Text':nameValidator, 'desc':'choose the x label to plot'},
+        'yDataLabel':{'term': 'Y Axis Label', 'type': str, 'Text':nameValidator, 'desc':'choose the y label to plot'}},
     'oParam':{
-        'style':{'term':'style', 'type': str, 'Text': True, 'desc': 'set the style of plot.'},
-        'xDataManagerIndex': {'term': 'xDataManagerIndex', 'type': int, 'Text':QIntValidator(0,20), 'desc':' Get x plotdata from data manager with this index. If not specified, use active data manager.'},
-        'yDataManagerIndex': {'term': 'yDataManagerIndex', 'type': int, 'Text':QIntValidator(0,20), 'desc':' Get y plotdata from data manager with this index. If not specified, use active data manager.'},
-        'label': {'term': 'legend Name', 'type': str, 'Text':True, 'desc':' the legend that will be desplayed'},
-        'kwParams':{'term': 'keyword parameters', 'type': kwDict, 'Text':True, 'desc':'advanced keyword arguments'}}}
+        'style':{'term':'style', 'type': str, 'Text': True, 'desc': styleHelp},
+        'xDataManagerIndex': {'term': 'X Data Manager Index', 'type': int, 'Text':QIntValidator(0,20), 'desc':' Get x plotdata from data manager with this index. If not specified, use active data manager.'},
+        'yDataManagerIndex': {'term': 'Y Data Manager Index', 'type': int, 'Text':QIntValidator(0,20), 'desc':' Get y plotdata from data manager with this index. If not specified, use active data manager.'},
+        'label': {'term': 'Legend', 'type': str, 'Text':True, 'desc':' the legend that will be desplayed'},
+        'kwParams':{'term': 'Keyword parameters', 'type': kwDict, 'Text':True, 'desc': keyWordHelp + 'matplotlib.axes.Axes.plot'}}}
 
 setScale = { 'func': 'setAxScale',
     'rParam':{},
-    'oParam':{'left':{'term': 'left', 'type': float, 'Text':QDoubleValidator(), 'desc':' the left position'},
-              'right':{'term': 'right', 'type': float, 'Text':QDoubleValidator(), 'desc':' the right position'},
-              'bottom':{'term': 'bottom', 'type': float, 'Text':QDoubleValidator(), 'desc':' the bottom position'},
-              'top':{'term': 'top', 'type': float, 'Text':QDoubleValidator(), 'desc':' the top position'},
-              'leftBlank':{'term': 'left blank', 'type': float, 'Text':QDoubleValidator(), 'desc':' the left blank ratio'},
-              'rightBlank':{'term': 'right blank', 'type': float, 'Text':QDoubleValidator(), 'desc':' the right blank ratio'},
-              'bottomBlank':{'term': 'bottom blank', 'type': float, 'Text':QDoubleValidator(), 'desc':' the bottom blank ratio'},
-              'topBlank':{'term': 'top blank', 'type': float, 'Text':QDoubleValidator(), 'desc':' the top blank ratio'}}}
+    'oParam':{'left':{'term': 'Left', 'type': float, 'Text':QDoubleValidator(), 'desc':' the left position'},
+              'right':{'term': 'Right', 'type': float, 'Text':QDoubleValidator(), 'desc':' the right position'},
+              'bottom':{'term': 'Bottom', 'type': float, 'Text':QDoubleValidator(), 'desc':' the bottom position'},
+              'top':{'term': 'Top', 'type': float, 'Text':QDoubleValidator(), 'desc':' the top position'},
+              'leftBlank':{'term': 'Left Blank Ratio', 'type': float, 'Text':QDoubleValidator(), 'desc':' the left blank ratio'},
+              'rightBlank':{'term': 'Right Blank Ratio', 'type': float, 'Text':QDoubleValidator(), 'desc':' the right blank ratio'},
+              'bottomBlank':{'term': 'Bottom blank Ratio', 'type': float, 'Text':QDoubleValidator(), 'desc':' the bottom blank ratio'},
+              'topBlank':{'term': 'Top Blank Ratio', 'type': float, 'Text':QDoubleValidator(), 'desc':' the top blank ratio'}}}
 
 setTickInterval = { 'func': 'setTickInterval',
     'rParam':{'axisType':{'term': 'Axis Type', 'type': str, 'option': {'x':'x', 'y':'y'}, 'desc':' the axis to modify'}},
@@ -110,16 +140,17 @@ setTickInterval = { 'func': 'setTickInterval',
 
 showLegends = { 'func': 'showLegends',
     'rParam':{},
-    'oParam':{'loc':{'term': 'legend Location', 'type': str, 'option': {'ur':'upper right', 'ul':'upper left', 'll': 'lower left', 'lr':'lower right', 'r': 'right', 'l': 'center left'}, 'desc':' the legend position ulrl refers to up, low, right left'},
-              'kwParams':{'term': 'keyword parameters', 'type': kwDict, 'Text':True, 'desc':'advanced keyword arguments'}}}
+    'oParam':{'loc':{'term': 'Legend Location', 'type': str, 'option': {'ur':'upper right', 'ul':'upper left', 'll': 'lower left', 'lr':'lower right', 'r': 'right', 'l': 'center left'}, 'desc':' the legend position ulrl refers to up, low, right left'},
+              'kwParams':{'term': 'Keyword parameters', 'type': kwDict, 'Text':True, 'desc': keyWordHelp + 'matplotlib.axes.Axes.legend'}}}
 
 note = { 'func': 'note',
-    'rParam':{'note': {'term': 'note', 'type': str, 'Text':True, 'desc':'Write some notes to explain things'}},
+    'rParam':{'note': {'term': 'Note', 'type': str, 'Text':True, 'desc':'Write some notes to explain things'}},
     'oParam':{}}
 
 script = { 'func': 'script',
-    'rParam':{'script': {'term': 'script', 'type': str, 'Text':True, 'desc':'Directly Write code to excecute'}},
+    'rParam':{'script': {'term': 'Script', 'type': str, 'Text':True, 'desc':scriptHelp}},
     'oParam':{}}
+
 # ==========================
 # action Dictionary
 # ==========================

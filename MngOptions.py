@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb  1 22:28:13 2022
-
 @author: shouk
 """
 from PyQt5.QtCore import QRegExp
@@ -26,8 +24,8 @@ def nameList(string):
 # ==========================
 formulaHelp = '''the expression will be applied to modify each value of the plot data.
 Useable variables:
-i: current index of the value, start from 0
-val: ith value of the current index, equals to label(i), label here is the label name you set at required parameter.
+i: the current index of the list during iteration, count start from 0.
+val: ith value of the current plot data label, equals to label(i), label here is the label name you set at required parameter.
 variableName: will get the value of variable that has this name. Add the variable before this action otherwise it won't work.
 plotDataName(index, default): will get the indexth value of plot data with this name. default is the default value if index out of range.
     if the plot data is not this one, add the plot data before this action otherwise it won't work.
@@ -42,10 +40,10 @@ Example:
 
 turnFormulaHelp = '''the expression will be applied to modify each value of the plot data.
 Useable variables:
-i: current index of the value, start from 0
-val: ith value of the current index, equals to label(i), label here is the label name you set at required parameter.
+i: the current index of the list during iteration, count start from 0.
+val: ith value of the current plot data label, equals to label(i), label here is the label name you set at required parameter.
 variableName: will get the value of variable that has this name. Add the variable before this action otherwise it won't work.
-plotDataName(index, default): will get the indexth value of plot data with this name. default is the default value if index out of range.
+plotDataLabel(index, default): will get the indexth value of plot data with this name. default is the default value if index out of range.
     if the plot data is not this one, add the plot data before this action otherwise it won't work.
 Example: 
     plot data: {x:[1,2,1,3,1,4]}
@@ -60,6 +58,30 @@ Example:
     final result: [1, 3]
 '''
 
+filterFormulaHelp = '''the expression will be applied to filter data.
+Useable variables:
+i: the current index of the list during iteration, count start from 0.
+val: ith value of the current plot data label, equals to label(i), label here is the label name you set at required parameter.
+variableName: will get the value of variable that has this name. Add the variable before this action otherwise it won't work.
+plotDataLabel(index, default): will get the indexth value of plot data with this name. default is the default value if index out of range.
+    if the plot data is not this one, add the plot data before this action otherwise it won't work.
+Example: 
+    plot data: {x:[1,2,1,3,1,4]}
+    label: x
+    funcString: val < 3
+    result: [1, 2, 1, 1]
+'''
+
+scriptHelp = '''Directly write script to excecute.
+can use these variables:
+    dataManager: Class(DataManager),
+    self: Class(MngTabWidget)
+
+Please refer to the source code for more information
+'''
+
+nameListHelp = '''
+Format: label1, label2, label3, ...'''
 # ==========================
 # action parameters
 # ==========================
@@ -80,58 +102,58 @@ addVariable = { 'func': 'createVariable',
 
 createPlotData = { 'func': 'createPlotData',
     'rParam':{
-        'key':{'term':'Title', 'type': str, 'Text': True, 'desc':'Get data from the corresponding title'},
-        'label':{'term':'Name', 'type': str, 'Text': nameValidator, 'desc':'Set the name of this plot data.'}},
+        'key':{'term':'Keyword', 'type': str, 'Text': True, 'desc':'Get data from the corresponding title'},
+        'label':{'term':'Label', 'type': str, 'Text': nameValidator, 'desc':'Set the name of this plot data.'}},
     'oParam':{
-        'funcString':{'term':'function', 'type': str, 'Text': True, 'desc':formulaHelp},
+        'funcString':{'term':'Function', 'type': str, 'Text': True, 'desc':formulaHelp},
         'sigfig':{'term':'Sigfig', 'type': int, 'Text': QIntValidator(1, 100), 'desc':'set sig fig of the plot data'}}}
 
 modifyPlotData = { 'func': 'modifyPlotDataValues',
     'rParam':{
-        'label':{'term':'Name', 'type': str, 'Text': nameValidator, 'desc':'the name of plot data to modify.'},
-        'funcString':{'term':'function', 'type': str, 'Text': True, 'desc':formulaHelp}},
+        'label':{'term':'Label', 'type': str, 'Text': nameValidator, 'desc':'the name of plot data to modify.'},
+        'funcString':{'term':'Function', 'type': str, 'Text': True, 'desc':formulaHelp}},
     'oParam':{}}
 
 truncateByValue = { 'func': 'truncatePlotDataByValue',
     'rParam':{
-        'label':{'term':'Plot Data Name', 'type': str, 'Text': nameValidator, 'desc': 'the name of plot data used to determine data range by value'},
-        'inputLabels':{'term':'Input', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of input plot data that are about to truncate'}}, 
+        'label':{'term':'Plot Data Label', 'type': str, 'Text': nameValidator, 'desc': 'the name of plot data used to determine data range by value'},
+        'inputLabels':{'term':'Input Labels', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of input plot data that are about to truncate. ' + nameListHelp}}, 
     'oParam':{
-        'outputLabels':{'term':'Output', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data.'},
+        'outputLabels':{'term':'Output Labels', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data. ' + nameListHelp},
         'startValue': {'term':'Start Value', 'type':float, 'Text':QDoubleValidator(),'desc': 'truncate data before the start value.'},
         'endValue': {'term':'End Value', 'type':float, 'Text':QDoubleValidator(),'desc': 'truncate data after the end value.'}}}
 
 truncateByTurn = { 'func': 'truncatePlotDataByTurn',
     'rParam':{
-        'label':{'term':'Plot Data Name', 'type': str, 'Text': nameValidator, 'desc': 'the name of plot data used to determine data range by Turn'},
-        'turnHandlerString':{'term':'function', 'type':str, 'Text': True, 'desc': turnFormulaHelp},
-        'inputLabels':{'term':'Input', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of input plot data that are about to truncate'}}, 
+        'label':{'term':'Plot Data Label', 'type': str, 'Text': nameValidator, 'desc': 'the name of plot data used to determine data range by Turn'},
+        'turnHandlerString':{'term':'Function', 'type':str, 'Text': True, 'desc': turnFormulaHelp},
+        'inputLabels':{'term':'Input Labels', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of input plot data that are about to truncate. ' + nameListHelp}}, 
     'oParam':{
-        'outputLabels':{'term':'Output', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data.'},
+        'outputLabels':{'term':'Output Labels', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data. ' + nameListHelp},
         'startTurn': {'term':'Start Turn', 'type':int, 'Text':QIntValidator(),'desc': 'truncate data before the start turn, if disabled start at turn one.'},
         'endTurn': {'term':'End Turn', 'type':int, 'Text':QIntValidator(),'desc': 'truncate data after the end value, if disabled end after turn one.'}}}
 
 filterByFunc = { 'func': 'filterPlotDataByFunc',
     'rParam':{
-        'label':{'term':'Plot Data Name', 'type': str, 'Text': nameValidator, 'desc': 'the name of plot data used to determine data range by Turn'},
-        'inputLabels':{'term':'Input', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of input plot data that are about to truncate'}, 
-        'funcString':{'term':'function', 'type': str, 'Text':True, 'desc': 'the function to do filtering'}}, 
+        'label':{'term':'Plot Data Label', 'type': str, 'Text': nameValidator, 'desc': 'the name of plot data used to determine data range by Turn'},
+        'inputLabels':{'term':'Input Labels', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of input plot data that are about to truncate. ' + nameListHelp}, 
+        'funcString':{'term':'Function', 'type': str, 'Text':True, 'desc': filterFormulaHelp}}, 
     'oParam':{
-        'outputLabels':{'term':'Output', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data.'}}}
+        'outputLabels':{'term':'Output Labels', 'type': nameList, 'Text': nameListValidator, 'desc': 'a list of plot data name for truncate output, if disabled the data will overwrite the input plot data. ' + nameListHelp}}}
 
 savePlotData = { 'func': 'savePlotData',
     'rParam':{}, 
     'oParam':{
-        'labels':{'term':'Lables', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of plot data that are about to export, default is all plot data'},
+        'labels':{'term':'Lables', 'type': nameList, 'Text':nameListValidator, 'desc': 'the name of plot data that are about to export, default is all plot data. ' + nameListHelp},
         'name': {'term':'Save Name', 'type':str, 'Text':nameValidator,'desc': 'the out put file name.'},
         'step': {'term':'Step', 'type':int, 'Text':QIntValidator(1,1000),'desc': 'step of each data saved, defult is 1, which means no data will be skipped. Set high to reduce file size(but will lose some data)'}}}
 
 note = { 'func': 'note',
-    'rParam':{'note': {'term': 'note', 'type': str, 'Text':True, 'desc':'Write some notes to explain things'}},
+    'rParam':{'note': {'term': 'Note', 'type': str, 'Text':True, 'desc':'Write some notes to explain things'}},
     'oParam':{}}
 
 script = { 'func': 'script',
-    'rParam':{'script': {'term': 'script', 'type': str, 'Text':True, 'desc':'Directly Write code to excecute'}},
+    'rParam':{'script': {'term': 'Script', 'type': str, 'Text':True, 'desc': scriptHelp}},
     'oParam':{}}
 
 # ==========================

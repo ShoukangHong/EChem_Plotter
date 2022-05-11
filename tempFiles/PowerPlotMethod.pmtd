@@ -1,4 +1,0 @@
-[{'action': 'Create New Figure', 'rParam': {}, 'oParam': {'nrows': 1}, 'rWidgetSetups': {}, 'oWidgetSetups': {'nrows': {'setup': [{}, {'value': '1'}], 'value': '1'}, 'ncols': {}}},
-{'action': 'Set Active Data Manager', 'rParam': {'index': 0}, 'oParam': {}, 'rWidgetSetups': {'index': {'setup': [{}, {}, {'value': '0'}], 'value': '0'}}, 'oWidgetSetups': {}},
-{'action': 'Set Active Axis', 'rParam': {'index': 0}, 'oParam': {}, 'rWidgetSetups': {'index': {'setup': [{}, {}, {'value': '0'}], 'value': '0'}}, 'oWidgetSetups': {'twin': {}}},
-{'action': 'Plot', 'rParam': {'xDataLabel': 'w', 'yDataLabel': 'xsquare'}, 'oParam': {}, 'rWidgetSetups': {'xDataLabel': {'setup': [{}, {}, {'value': 'w'}], 'value': 'w'}, 'yDataLabel': {'setup': [{}, {}, {'value': 'xsquare'}], 'value': 'xsquare'}}, 'oWidgetSetups': {'style': {}, 'xDataManagerIndex': {}, 'yDataManagerIndex': {}}}]

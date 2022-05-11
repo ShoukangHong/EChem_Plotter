@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb  1 16:33:54 2022
-
 @author: shouk
 """
-import os
-import re
-import pandas
-import numpy
-import math
-import matplotlib
+import os, pandas, numpy, math, re
 import matplotlib.pyplot as plt
 import matplotlib.ticker as plticker
 
@@ -49,7 +42,6 @@ class DataManager:
         self._data = []
         self._variables = {}
         self._plotDataSet = {}
-        self._eventLog = []
         self.loadRawData(rawAddress, sheet)
     
     # =======================================
@@ -57,22 +49,27 @@ class DataManager:
     # =======================================
     def loadRawData(self, rawAddress,sheet = 0):
         '''given a doc address, return the data as a string'''
+        self.clearData()
+        self._docInfo = {}
         address = self.loadDocInfo(rawAddress)
         docType = self.docInfo('type') 
         try:
-            if docType == '.mpt':
-                doc = open(address, 'r', encoding='utf-8',errors = 'ignore')
-            else:
-                doc = open(address, 'r')
-            self._rawData = doc.readlines()
-        except:
-            try:
+            if docType in ['.xlsx', '.xlsm', '.xls']:
                 dataFrame = pandas.read_excel(address, sheet)
                 self._rawData=dataFrame.to_csv(index=False, sep='\t').split('\r\n')
-            except:
-                self.__pushLog('document doesn\'t exist!')
-                self.viewLog()
-                
+            elif docType == '.mpt':
+                doc = open(address, 'r', encoding='utf-8',errors = 'ignore')
+                self._rawData = doc.readlines()
+                doc.close()
+            else:
+                doc = open(address, 'r', errors = 'ignore')
+                self._rawData = doc.readlines()
+                doc.close()
+        except Exception as e:
+            print(e)
+            raise e
+            
+            
     def loadDocInfo(self, rawAddress):
         '''given a document address, format it and store document info({address: , path: , name: , type: })'''
         self._docInfo['address'] = self.formatAddress(rawAddress)
@@ -97,28 +94,31 @@ class DataManager:
         '''given raw data, format it to meet certain criteria.
         spliter, starter, ender, (str): determines the way to deal with raw data
         '''
+        spString = spliter
         spliter = self.createSpliter(spliter)
         starter = self.createStarter(starter)
         ender = self.createEnder(ender)
-        self._data = []
         i = 0
         while not starter(self._rawData[i]):
             i += 1
-            
         self._header = spliter(self._rawData[i].strip())
         i += 1
-        
+        self._data = pandas.DataFrame([], columns = self._header)
+        temp = []
         while i < len(self._rawData) and i < maxLine and not ender(self._rawData[i]):
-            if self._rawData[i] != '':
-                line = [string for string in spliter(self._rawData[i].strip())]
-                self._data.append(line)
-            i += 1
-        # del self._rawData
-    
-    # def truncateData(self, step = 1, start = 0, end = None):
-    #     if end == None:
-    #         end = len(self._data)
-    #     self._data = self._data[start:end:step]        
+            if self._rawData[i] == '':
+                i+=1
+            elif len(temp)<500000:
+                temp.append(spliter(self._rawData[i].strip()))
+                i += 1
+            else:
+                temp = pandas.DataFrame(temp, columns = self._header)
+                self._data = pandas.concat([self._data, temp], ignore_index=True)
+                temp = []
+                print('Formating data...' + str(i) + '/' + str(len(self._rawData)))
+        if len(temp) > 0:
+            temp = pandas.DataFrame(temp, columns= self._header)
+            self._data = pandas.concat([self._data, temp], ignore_index=True)
     
     def createPlotData(self, key, label = None, funcString = None, sigfig = None):
         '''create and store plot data for further calculation and plotting
@@ -137,7 +137,7 @@ class DataManager:
                 final result: [4, 8, 12, 16, 20]
         '''
         label = label if label else self.getHead(key)
-        values = [val for val in self.getCol(key, sigfig)]
+        values = numpy.array(self.getCol(key, sigfig), dtype=numpy.float32)
         self.plotDataSet()[label] = PlotData(label, values)
         if funcString:
             values = self.modifyValues(values, funcString)
@@ -149,14 +149,13 @@ class DataManager:
     
     def modifyValues(self, values, funcString):
         func = self.createDataHandler(funcString)
-        return [func(i, val, self.variables(), self.plotDataSet()) for i, val in enumerate(values)]
+        return numpy.array([func(i, val, self.variables(), self.plotDataSet()) for i, val in enumerate(values)], dtype=numpy.float32)
     
     def clearData(self):
         self._header= []
         self._data = []
         self._variables = {}
         self._plotDataSet = {}
-        self._eventLog = []
     
     # =======================================
     # Save
@@ -209,6 +208,7 @@ class DataManager:
             if turnhandler(i, allValues[i], self.variables(), self.plotDataSet()):
                 turn += 1
             i += 1
+            assert i < len(allValues), 'Cannot find start turn ' + str(startTurn) + ' with function string: ' + turnhandlerString
         if i > 1 and i < len(allValues) and turn <= endTurn:
             start = i - 1
         while turn <= endTurn and i < len(allValues):
@@ -256,20 +256,21 @@ class DataManager:
                 plotData.setValues(values[start:end:step])
 
     def filterPlotDataByFunc(self, label, inputLabels, funcString = '', outputLabels = None):
-        '''
+        '''filter plot data by funcString, only collect plot data that returns true,
+        label(str):label of the plot data used to determin turn
         '''
         values = self.getPlotDataValues(label)
         func = self.createDataHandler(funcString)
         filterList = [func(i, val, self.variables(), self.plotDataSet()) for i, val in enumerate(values)]
-        def filterByList(inputValues):
-            outPut = []
-            for i, val in enumerate(inputValues):
-                if filterList[i]:
-                    outPut.append(val)
-            return outPut
+        # def filterByList(inputValues):
+        #     outPut = []
+        #     for i, val in enumerate(inputValues):
+        #         if filterList[i]:
+        #             outPut.append(val)
+        #     return numpy.array(outPut)
         for i, targetLabel in enumerate(inputLabels):
             plotData = self.getPlotData(targetLabel)
-            filteredValues = filterByList(plotData.values())
+            filteredValues = plotData.values()[filterList]
             if outputLabels:
                 self.plotDataSet()[outputLabels[i]] = PlotData(outputLabels[i], filteredValues)
             else:
@@ -320,50 +321,37 @@ class DataManager:
         for key in self.plotDataSet():
             string = re.sub(r'(\W)('+ key + r')\(', r"\1plotDataSet['\2'].getValue(", string)
             string = re.sub(r"([^'\w])("+ key + r")([^'\w])", r"\1plotDataSet['\2']\3", string)
-        #print(string)
-        #string = re.sub(r'plotDataSet\[(.*?)\]', r'plotDataSet[\1].getValue', string)
         for key in self.variables():
             string = re.sub(r'(\W)('+ key + r')(\W)', r"\1variables['\2']\3", string)
-        #print(string)
         return 'def func(i, val, variables, plotDataSet): \n\t return ' + string[1:-1]
-    
-    # =======================================
-    # log info
-    # =======================================
-    def __pushLog(self, string):
-        self._eventLog.append(string)
-        print('event history: ')
-        if len(self._eventLog) > 20:
-            self._eventLog.pop(0)
-
-    def viewLog(self):
-        for string in self._eventLog[::-1]:
-            print(string)
     
     def createInfoData(self):
         '''return a dict'''
         info = {'raw': self.getShortList(self._rawData),
-                'data': [self._header[:]] + self.getShortList(self._data),
+                'data': self.getShortList(self._data),
                 'variables' : self._variables.copy(),
                 'plotData' : {key:self.getShortList(data.values()) for key, data in self._plotDataSet.items()}
                 }
-        print(info)
         return info
     
-    def getShortList(self, dataList):
-        if not dataList:
+    def getShortList(self, data):
+        if isinstance(data, pandas.DataFrame):
+            if data.shape[0] < 400:
+                return numpy.concatenate(([self._header[:]], data.to_numpy()))
+            else:
+                return numpy.concatenate(([self._header[:]], data[:100].to_numpy(),
+                                    data[data.shape[0]//2-50:data.shape[0]//2+50].to_numpy(),
+                                    data[-100:].to_numpy()))
+        elif not isinstance(data, numpy.ndarray) and not data or len(data)<0:
             return []
-        if len(dataList) < 400:
-            return dataList[:]
+        elif len(data) < 400:
+            return list(data)
         else:
-            if isinstance(dataList[0], list):
-                placeHolder = [['...' for i in range(len(dataList[0]))]]
+            if isinstance(data[0], list):
+                placeHolder = [['...' for i in range(len(data[0]))]]
             else:
                 placeHolder = ['...']
-            return dataList[:100]+placeHolder+dataList[len(dataList)//2-50:len(dataList)//2+50]+placeHolder+dataList[-100:]
-    # def __str__(self):
-    #     print('\t'.join(self._header))
-    #     print('\n'.join(['\t'.join([str(num) for num in line]) for line in self._data]))
+            return list(data[:100])+placeHolder+list(data[len(data)//2-50:len(data)//2+50])+placeHolder +list(data[-100:])
         
     # =======================================
     # Getters
@@ -379,14 +367,11 @@ class DataManager:
     
     def getCol(self, key, sigfig = None):
         '''given regex or index, return the corresponding column data'''
-        index = self.getIndex(key)
+        head = self.getHead(key)
         try:
-            if sigfig != None:
-                return list(map(lambda line: round(float(line[index]), sigfig), self._data))
-            else:
-                return  list(map(lambda line: float(line[index]), self._data))
+            return self._data[head].apply().astype(numpy.float32)
         except:
-            return [line[index] for line in self._data]
+            return self._data[head]
     
     def getIndex(self, key):
         '''given regex, return the header index that matches regex'''
@@ -446,6 +431,7 @@ class EchemPlotter:
             self.figure().clear()
             plt.clf()
             plt.cla()
+            plt.close()
         plt.figure(self._figureCount)
     
     # =======================================
@@ -475,7 +461,7 @@ class EchemPlotter:
         
         self.activeAx().plot(*args, **kwargs)
         
-    def newFigure(self, nrows=1, ncols=1, clear = False):
+    def newFigure(self, nrows=1, ncols=1, clear = True):
         '''Create a new figure with a set of subplots.
         nrows, ncos(int): Number of rows/columns of the subplot grid.
         '''
@@ -599,7 +585,6 @@ class EchemPlotter:
         elif isinstance(minor, int):
             axis.set_minor_locator(plticker.AutoMinorLocator(minor))
         
-        #print(interval)
         if not interval or not realign:
             return
         
@@ -613,12 +598,10 @@ class EchemPlotter:
                 
         if axisType == 'y':
             bottom, top = self.activeAx().get_ylim()
-            #print(bottom, top)
             if 's' in realign:
                 bottom = bottom - bottom % interval
             if 'e' in realign:
                 top = top + interval - top % interval
-            #print(bottom, top)
             self.activeAx().set_ylim(bottom = bottom, top = top)
     
     def __getInterval(self, difference, tickNum):
@@ -699,34 +682,3 @@ class EchemPlotter:
         '''
         dataManager = self.activeDataManager() if index == None else self._dataManagers[index]
         return dataManager.getPlotDataValues(label)
-    
-if (__name__ == '__main__'):
-    echem = {'E':[[6,6,6,6,6,7,8,7,8,7,8],[13,12,11,10,9,13,13,11,11,9,9]],
-          'C':[[10,10,10,10,10,11,12,11,12],[13,12,11,10,9,13,13,9,9]],
-          'H':[[14,14,14,14,14,15,16,16,16,16,16],[13,12,11,10,9,11,13,12,11,10,9]],
-          'E2':[[18,18,18,18,18,19,20,19,20,19,20],[13,12,11,10,9,13,13,11,11,9,9]],
-          'M':[[22,22,22,22,22,22.33,22.67,23,23.33,23.67,24,24,24,24,24],[13,12,11,10,9,12,11,10,11,12,13,12,11,10,9]]}
-    
-    plotter = {'P':[[2,2,2,2,2,3,4,4,4,3], [6,5,4,3,2,6,6,5,4,4]],
-          'L': [[6,6,6,6,6,7,8],[6,5,4,3,2,2,2]],
-          'O': [[10,10,10,10,10,11,12,12,12,12,12,11],[6,5,4,3,2,2,2,3,4,5,6,6]],
-          'T': [[14,15,16,15,15,15,15],[6,6,6,5,4,3,2]],
-          'T2': [[18,19,20,19,19,19,19],[6,6,6,5,4,3,2]],
-          'E3': [[22,22,22,22,22,23,24,23,24,23,24],[6,5,4,3,2,6,6,4,4,2,2]],
-          'R': [[26,26,26,26,26,27,28,28,28,27,27,28],[6,5,4,3,2,6,6,5,4,4,3,2]]}
-    echemX =[]
-    echemY = []
-    for val in echem.values():
-        echemX += val[0]
-    for val in echem.values():
-        echemY += val[1]
-    plotterX =[]
-    plotterY = []
-    for val in plotter.values():
-        plotterX += val[0]
-    for val in plotter.values():
-        plotterY += val[1]
-    plt.plot([7.5 + val for val in echemX], [7.5 + val for val in echemY], 'bo')
-    plt.plot([7.5 + val for val in plotterX], [7.5 + val for val in plotterY], 'ro')
-    plt.xlim([0, 45])
-    plt.ylim([0, 30])

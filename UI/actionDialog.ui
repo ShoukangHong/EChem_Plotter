@@ -137,6 +137,9 @@
         <property name="currentText">
          <string/>
         </property>
+        <property name="maxVisibleItems">
+         <number>20</number>
+        </property>
        </widget>
       </item>
      </layout>
