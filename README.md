@@ -66,8 +66,8 @@ hover on it and a help text may show up!
 
 ## TODO:
 
-### DataManager Action Dialog
+#### DataManager Action Dialog
 
-### Plotter Action Dialog
+#### Plotter Action Dialog
 
-### Documentation
+#### Documentation
