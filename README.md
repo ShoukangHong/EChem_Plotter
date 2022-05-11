@@ -43,7 +43,7 @@ A select file dialog will pop up and you will see a 'DemoDataAndTemplate' folder
 
 <img src="./images/selectBaseTemplate.png" width="350" height="auto">
 
-A template contains data manager methods and plotter methods. This template is designed for the linear.txt, so lets' click on the 'Data File' button in the Data Managers part.
+A template contains data manager methods and plotter method. This template is designed for the linear.txt, or any data that has 'x', 'y' as header. Lets' click on the 'Data File' button in the Data Managers part.
 
 <img src="./images/selectDataFile.png" width="350" height="auto">
 
