@@ -21,7 +21,7 @@ Download the zip folder and unzip.
 Excecute the EChem_Plotter.exe and you are ready to go!
 You will first see a black window, which is the console, be patient and wait for the main window to pop up:
 
-<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/mainWindow.png" width="700" height="600">
+<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/mainWindow.png" width="700" height="auto">
 
 The UI is composed of 4 parts:
 The left top part is data Manager Tab, where you control how to process your data.
@@ -32,34 +32,34 @@ The right bottom part is image preview, where you can preview and make adjustmen
 ### Quick Start
 There are some provided templates for you to start with. First, go to menu and select 'Load Template':
 
-<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/loadTemplate.png" width="300" height="200">
+<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/loadTemplate.png" width="300" height="auto">
 
 A select file dialog will pop up and you will see a 'DemoDataAndTemplate' folder, go to DemoDataAndTemplate\Basic\ and select Base_Template.tmp.
 
-<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/selectBaseTemplate.png" width="350" height="80">
+<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/selectBaseTemplate.png" width="350" height="auto">
 
 A template contains code for all the data managers and plotter. This template is designed for the linear.txt, so lets' click on the 'Data File' button in the Data Managers part.
 
-<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/selectDataFile.png" width="350" height="300">
+<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/selectDataFile.png" width="350" height="auto">
 
 Then, select linear.txt, the linear txt data will show up on the info window, please ignore the '...' which is a small display bug:
 
-<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/rawDataLinear.png" width="350" height="300">
+<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/rawDataLinear.png" width="350" height="auto">
 
 Now, let's take a look at what the program does, if you double click on the list items, a dialog will show up, let's click on the 'Format Raw Data' row:
 
-<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/formatRawData.png" width="500" height="400">
+<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/formatRawData.png" width="500" height="auto">
 
 You can see that we are spliting the raw data with tab. Hover on the parameter text will show you description of the parameter.
 You can edit the action and parameters to do different things, but for now let's just close the dialog and click 'run and plot' in the plotter part.
 
-<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/runAndPlot.png" width="350" height="300">
+<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/runAndPlot.png" width="350" height="auto">
 
 And that's it, the plot is there and you can click 'save image' to save it!
 You can use the tool bar above image preview to adjust the image, you can also go to menu->setting->image format to change the size and dpi of the image.
 To verify that the data are correctly processed, you can click on the Data/Variable/Plot Data tabs in the info part. Note that only plot data is used for plotting.
 
-<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/basicDone.png" width="700" height="600">
+<img src="https://github.com/ShoukangHong/EChem_Plotter/blob/main/images/basicDone.png" width="700" height="auto">
 
 Now you can play around with the program, you can try other templates and data file, edit parameters, and plot! If you don't understand what a button/parameter does,
 hover on it and a help text may show up!
