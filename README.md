@@ -1,5 +1,6 @@
 # EChem Plotter
 <!-- TABLE OF CONTENTS -->
+#### Table of Contents
   <ol>
     <li><a href="#introduction">Introduction</a></li>
     <li><a href="#license">License</a></li>
@@ -36,7 +37,7 @@ Option 2: If you have python installed, download the source code and run EChemPl
 
 ## Instruction
 
-If you use the executable file, you will first see a black window, which is the console, please wait for the main window to pop up:
+If you use the executable file EChem_Plotter.exe, you will first see a black window, which is the console, please wait for the main window to pop up:
 
 <img src="./images/mainWindow.png" width="700" height="auto">
 
