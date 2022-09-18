@@ -17,15 +17,13 @@ all rights reserved. Redistribution of edited versions and commercial use is pro
 
 ## Install
 
-Option 1: Executable file. download the [zip](./EChemPlotter_v1.0.zip) file and unzip, no installation is needed.
+Option 1: Executable file. download the [zip](./EChemPlotter_v1.0.zip) file and unzip, no installation is needed. Excecute the EChem_Plotter.exe and you are ready to go.
 
 Option 2: If you have python installed, download the source code and run EChemPlotter.py. The source code requires python 3.5 or higher versions. Make sure you have PyQt5, Numpy, Pandas, and Matplotlib modules installed.
 
-## How to Use
+## Instruction
 
-Excecute the EChem_Plotter.exe and you are ready to go!
-
-You will first see a black window, which is the console, please wait for the main window to pop up:
+If you use the executable file, you will first see a black window, which is the console, please wait for the main window to pop up:
 
 <img src="./images/mainWindow.png" width="700" height="auto">
 
@@ -72,7 +70,7 @@ To verify that the data are correctly processed, you can click on the Data/Varia
 
 <img src="./images/basicDone.png" width="700" height="auto">
 
-And that's it! Now you can play around with the program, you can try other templates and data file, edit parameters, and plot! If you don't understand what a button/parameter does, hover on it and a help text may show up!
+Feel free to play with the program. You can try other templates and data file, edit parameters, and plot methods. If you don't understand what a button/parameter does, hover on it and a help text may show up!
 
 ### Batch Processing
 
