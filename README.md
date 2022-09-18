@@ -72,5 +72,20 @@ To verify that the data are correctly processed, you can click on the Data/Varia
 
 <img src="./images/basicDone.png" width="700" height="auto">
 
-Now you can play around with the program, you can try other templates and data file, edit parameters, and plot! If you don't understand what a button/parameter does,
-hover on it and a help text may show up!
+And that's it! Now you can play around with the program, you can try other templates and data file, edit parameters, and plot! If you don't understand what a button/parameter does, hover on it and a help text may show up!
+
+### Batch Processing
+
+A great feature of this software is batch processing. You can use this function to process multiple data files at once, saving even more time.
+
+After completing the data processing and plotting method settings, select batch processing:
+
+<img src="./images/batchProcessOption.png" width="500" height="auto">
+
+Then, select the data files you want to plot, here we only have two files, but you can choose as many files as you want. Click Open to run.
+
+<img src="./images/batchProcessFiles.png" width="300" height="auto">
+
+Enter the data file directory. The plots are already there!
+
+<img src="./images/batchProcessResult.png" width="400" height="auto">
