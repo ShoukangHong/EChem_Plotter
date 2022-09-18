@@ -88,7 +88,7 @@ Feel free to play with the program. You can try other templates and data file, e
 
 ### Batch Processing
 
-A great feature of this software is batch processing. You can use this function to process multiple data files at once, saving even more time.
+A powerful tool this software provides is batch processing. You can use this function to process multiple data files at once, saving even more time.
 
 After completing the data processing and plotting method settings, select batch processing:
 
