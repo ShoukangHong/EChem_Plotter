@@ -86,7 +86,8 @@ class Ui_MainWindow(BaseUI):
         fileName, _ = QFileDialog.getOpenFileName(self.subjectWindow,"Load Template", "","Method Files (*.tmp);;All Files (*)", options=options)
         if fileName:
             try:
-                text = open(fileName,'r').read()
+                with open(fileName,'r') as f:
+                    text = f.read()
                 template = eval(text)
                 for i, dataMethod in enumerate(template['DataMethods']):
                     if self.mngTabs.count() <= i+1:
@@ -120,9 +121,9 @@ class Ui_MainWindow(BaseUI):
                 template += self.plotActionWidget.methodToString() + '}'
             else:
                 template += 'False' + '}'
-            file = open(fileName,'w')
-            file.write(template)
-            file.close()
+            
+            with open(fileName,'w') as file:
+                file.write(template)
             
     def loadDataMethodToAll(self):
         '''select a data method and load to all data managers'''
@@ -271,7 +272,8 @@ class Ui_MainWindow(BaseUI):
     # Image format related
     # ========================
     def loadImageFormat(self):
-        text = open(CONFIG['imageFormatDir'],'r').read()
+        with open(CONFIG['imageFormatDir'],'r') as f:
+            text = f.read()
         try:
             CONFIG['imageFormat'] = eval(text)
             if not isinstance(CONFIG['imageFormat'], dict):
@@ -290,9 +292,8 @@ class Ui_MainWindow(BaseUI):
     
     def setImageFormat(self, imageFormat):
         CONFIG['imageFormat'] = imageFormat
-        file = open(CONFIG['imageFormatDir'],'w')
-        file.write(str(imageFormat))
-        file.close()
+        with open(CONFIG['imageFormatDir'],'w') as file:
+            file.write(str(imageFormat))
         self.resizeCanvas()
         
     # ========================

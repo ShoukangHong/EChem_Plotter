@@ -58,13 +58,11 @@ class DataManager:
                 dataFrame = pandas.read_excel(address, sheet)
                 self._rawData=dataFrame.to_csv(index=False, sep='\t').split('\r\n')
             elif docType == '.mpt':
-                doc = open(address, 'r', encoding='utf-8',errors = 'ignore')
-                self._rawData = doc.readlines()
-                doc.close()
+                with open(address, 'r', encoding='utf-8',errors = 'ignore') as doc:
+                    self._rawData = doc.readlines()
             else:
-                doc = open(address, 'r', errors = 'ignore')
-                self._rawData = doc.readlines()
-                doc.close()
+                with open(address, 'r', errors = 'ignore') as doc:
+                    self._rawData = doc.readlines()
         except Exception as e:
             print(e)
             raise e
