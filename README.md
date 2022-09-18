@@ -88,4 +88,4 @@ Then, select the data files you want to plot, here we only have two files, but y
 
 Enter the data file directory. The plots are already there!
 
-<img src="./images/batchProcessResult.png" width="400" height="auto">
+<img src="./images/batchProcessResult.png" width="700" height="auto">
